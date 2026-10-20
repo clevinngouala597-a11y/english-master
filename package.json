@@ -1,0 +1,9 @@
+{
+  "name": "english-master",
+  "private": true,
+  "description": "App iPhone pour apprendre l’anglais : leçons, oral, coach, suivi par périodes.",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node test/engine.test.mjs"
+  }
+}

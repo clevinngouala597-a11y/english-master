@@ -7,14 +7,17 @@ Premier module : **English Video Coach**.
 ## Où en est le projet
 
 - [x] Maquettes des 9 écrans (thème noir)
-- [ ] Bibliothèque A1 validée : 6 leçons du quotidien
-- [ ] Lecteur avec sous-titres interactifs EN / FR
-- [ ] Oral : jeu de rôle et répétition de phrases
-- [ ] Exercices et corrections sauvegardées
-- [ ] Bilan avec le coach en fin de module
-- [ ] Suivi par périodes et révisions espacées
-- [ ] Séries et films par niveau et par thème
-- [ ] Mise en ligne sur GitHub Pages
+- [x] Bibliothèque A1 validée : 6 leçons du quotidien (Hello!, At the café, My daily routine, Asking for directions, At the supermarket, Talking about the weather)
+- [x] Lecteur avec voix, vitesse, réécoute d’une phrase et sous-titres interactifs EN / FR
+- [x] Oral : jeu de rôle et répétition notée mot par mot
+- [x] 7 exercices par leçon, corrections sauvegardées, erreurs passées réutilisées
+- [x] Bilan avec le coach en fin de module et plan ajouté au suivi
+- [x] Suivi par périodes école / entreprise, régularité, évolution, révisions espacées
+- [x] Séries et films par niveau et par thème
+- [ ] Leçons A2, B1, B2
+- [ ] Catégories Pro, Maintenance, TOEIC
+
+**Ouvrir l’app sur iPhone :** https://clevinngouala597-a11y.github.io/english-master/ (dans Safari, puis Partager → Sur l’écran d’accueil).
 
 ## Les écrans
 
@@ -39,12 +42,13 @@ Premier module : **English Video Coach**.
 
 ## Deux versions
 
-| | Version Claude | Version GitHub Pages |
+| | Version claude.ai | Version GitHub Pages |
 |---|---|---|
 | Coach et corrections libres | Claude | Conseils préparés, corrections automatiques |
-| Sauvegarde | Liée au compte | Sur l'iPhone (navigateur) |
-| Voix et micro | Oui | Oui |
-| Accès | Lien claude.ai | Lien github.io, hors ligne possible |
+| Oral au micro | Non (le micro est bloqué dans claude.ai) : réponses écrites | Oui, avec la reconnaissance vocale de Safari |
+| Voix des leçons | Oui | Oui |
+| Sauvegarde | Compte Claude + appareil | Navigateur de l’appareil |
+| Hors ligne | Non | Oui, après une première ouverture |
 
 ## Règles de contenu
 
@@ -57,7 +61,16 @@ Premier module : **English Video Coach**.
 
 - Page web sans serveur : HTML, CSS, JavaScript.
 - Voix : `speechSynthesis` (Web Speech API). Micro : reconnaissance vocale de Safari.
-- Données : `localStorage` / IndexedDB sur l'appareil.
+- Données : `localStorage` sur l’appareil, et base du compte dans la version claude.ai.
+- Sources dans `src/` : `content.js` (leçons), `engine.js` (logique : scores, maîtrise, révisions, périodes, recommandations), `app.js` (écrans), `styles.css`.
+
+## Construire et tester
+
+```bash
+node build.mjs              # génère index.html (GitHub Pages) et dist/artifact.html (claude.ai)
+node test/engine.test.mjs   # tests de la logique
+python3 test/e2e.py URL     # parcours complet dans un navigateur (Playwright)
+```
 
 ## Documents
 
