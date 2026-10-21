@@ -49,6 +49,7 @@ a { color: var(--blue-fg); }
 :focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
 h1, h2, h3 { text-wrap: balance; }
 mark { background: var(--acc); color: var(--on-acc); padding: 0 3px; border-radius: 4px; }
+[hidden] { display: none !important; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 #app { max-width: 480px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 14px 120px; display: flex; flex-direction: column; gap: 22px; min-height: 100%; }
@@ -231,6 +232,18 @@ table.evo tbody tr { border-top: 1px solid var(--line); }
 .steps-bar i.cur { background: var(--acc); }
 .steps-bar i.skip { background: #4A4E56; }
 .chapters { display: flex; gap: 3px; font-size: 12px; color: var(--mut); }
+
+/* Vidéo YouTube */
+.yt-frame { position: relative; aspect-ratio: 16 / 9; max-width: 100%; border-radius: var(--r-lg); overflow: hidden; background: #000; border: 1px solid var(--line); }
+.yt-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.yt-loading { pointer-events: none; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--mut); font-size: 14px; }
+input[type="range"] { accent-color: var(--acc); width: 100%; min-height: 32px; }
+dt, dd { min-width: 0; overflow-wrap: anywhere; }
+
+/* Shadowing */
+.countdown { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.countdown i { display: block; height: 100%; width: 100%; background: var(--acc); animation-name: shrink; animation-timing-function: linear; animation-fill-mode: forwards; }
+@keyframes shrink { from { width: 100%; } to { width: 0; } }
 
 html { padding-top: env(safe-area-inset-top, 0px); }
 </style>
@@ -578,7 +591,27 @@ html { padding-top: env(safe-area-inset-top, 0px); }
     }
   ];
 
+  /* Vraies vidéos YouTube, une par leçon. Pages vérifiées le 20/10/2026 ; l'intégration
+     est contrôlée par le lecteur YouTube à chaque lecture (vidéo bloquée = message + lien). */
+  var CHECKED = "2026-10-20";
+  var VIDEOS = {
+    hello: { id: "qk292kwyiXU", title: "Introducing yourself in English / A1 for beginners.", channel: "Learn English Online", level: "A1", accent: null, duration: null, subtitles: null, about: "Joao et Katerina se rencontrent dans l’ascenseur d’une école d’anglais, se présentent et parlent de leur pays." },
+    cafe: { id: "ybDCTCJzx9w", title: "Ordering Coffee at a Café - BEGINNER - A1 A2 - English Conversation", channel: "Learn English with Relaxing Stories", level: "A1-A2", accent: null, duration: null, subtitles: null, about: "Un dialogue pour commander un café et une viennoiserie : taille, chaud ou froid, petite conversation polie." },
+    routine: { id: "t0_x13V786g", title: "BEGINNER ENGLISH STORY ⏰ Jonny's Daily Routine ⏰ A1 / A2 / Level 1 | BRITISH ENGLISH WITH SUBTITLES", channel: "Lovely English Stories", level: "A1-A2", accent: "britannique", duration: null, subtitles: "Sous-titres anglais dans la vidéo", about: "Une histoire racontée lentement : la journée de Jonny, du réveil au soir." },
+    directions: { id: "wpGQBanTAgc", title: "Asking for directions in London | English listening | Beginner | A1", channel: "Angličtina online - Chcem sa učiť", level: "A1", accent: null, duration: null, subtitles: null, about: "Une écoute A1 : demander son chemin dans les rues de Londres." },
+    supermarket: { id: "1xHABEfV53g", title: "At the Supermarket | Supermarket Vocabulary & Dialogues | Beginner English for ESL Learners (A1)", channel: "English MD", level: "A1", accent: null, duration: 242, subtitles: null, about: "Vocabulaire du supermarché, quantités, rayons, demander de l’aide et payer à la caisse." },
+    weather: { id: "40PRWD1-HWA", title: "Talking about WEATHER — Slow Beginner English (A1-A2)", channel: "Learn English with Camille", level: "A1-A2", accent: null, duration: null, subtitles: null, about: "Camille et Calvin parlent de la météo en anglais simple et lent." }
+  };
+  Object.keys(VIDEOS).forEach(function (k) {
+    var v = VIDEOS[k];
+    v.lang = "en";
+    v.url = "https://www.youtube.com/watch?v=" + v.id;
+    v.source = "YouTube";
+    v.validation = { status: "page vérifiée", date: CHECKED };
+  });
+
   LESSONS.forEach(function (l) {
+    l.video = VIDEOS[l.id] || null;
     l.source = { type: "original", name: "English Master", note: "Leçon originale lue par la voix de synthèse de l’appareil" };
     l.subtitles = ["EN", "FR"];
     l.validation = { status: "validée", date: VALIDATED };
@@ -939,12 +972,12 @@ html { padding-top: env(safe-area-inset-top, 0px); }
 
   /* ---------- État ---------- */
   var EX_TYPES = ["comprehension", "vocab", "gaps", "translation", "dictation", "oral", "summary"];
-  var EX_LABELS = { comprehension: "Compréhension", vocab: "QCM vocabulaire", gaps: "Texte à trous", translation: "Traduction", dictation: "Dictée", oral: "Oral", summary: "Résumé en anglais", revision: "Révision", roleplay: "Jeu de rôle", repeat: "Répétition" };
+  var EX_LABELS = { comprehension: "Compréhension", vocab: "QCM vocabulaire", gaps: "Texte à trous", translation: "Traduction", dictation: "Dictée", oral: "Oral", summary: "Résumé en anglais", revision: "Révision", roleplay: "Jeu de rôle", repeat: "Répétition", shadow: "Shadowing" };
   var SKILLS = {
     comprehension: { label: "Compréhension orale", types: ["comprehension", "dictation"] },
     vocabulaire: { label: "Vocabulaire", types: ["vocab", "gaps"] },
     ecriture: { label: "Écriture", types: ["translation", "summary"] },
-    oral: { label: "Oral", types: ["oral", "roleplay", "repeat"] }
+    oral: { label: "Oral", types: ["oral", "roleplay", "repeat", "shadow"] }
   };
   var MASTERY = 80;
   var INTERVALS = [1, 3, 7, 14, 30];
@@ -1190,8 +1223,14 @@ html { padding-top: env(safe-area-inset-top, 0px); }
       var ls = state.lessons[l.id];
       var st = lessonStatus(state, l.id);
       var score = 0, reasons = [], kind = "new";
+      var vid = ls && ls.video;
       if (st.key === "nouvelle") { score += 30; reasons.push("Nouvelle leçon à ton niveau " + level); }
-      else if (st.key === "en-cours") { score += 45; kind = "continue"; reasons.push(ls.watched ? "Tu l’as vue : il reste les exercices" : "Tu l’as commencée"); }
+      else if (st.key === "en-cours") {
+        score += 45; kind = "continue";
+        if (vid && vid.done && !ls.exDone) reasons.push("Tu as vu la vidéo YouTube : il reste les exercices");
+        else if (vid && vid.max > 0 && !vid.done) reasons.push("Tu as commencé la vidéo YouTube (" + vid.pct + " %)");
+        else reasons.push(ls.watched ? "Tu l’as vue : il reste les exercices" : "Tu l’as commencée");
+      }
       else if (st.key === "fragile") { score += 35; kind = "consolidate"; reasons.push("Score de " + st.pct + " % : à consolider avant d’avancer"); }
       else {
         if (ls.review && ls.review.next <= date) { score += 20; kind = "review"; reasons.push("Révision prévue aujourd’hui"); }
@@ -1238,6 +1277,23 @@ html { padding-top: env(safe-area-inset-top, 0px); }
     return steps;
   }
 
+  /* Shadowing : temps laissé pour répéter une phrase juste après la voix. */
+  function shadowGap(text, rate) {
+    var n = tokens(text).length;
+    return Math.round(Math.max(2, (n * 0.45) / (rate || 1) + 1) * 10) / 10;
+  }
+  /* Vidéo : avancement suivi à partir du lecteur YouTube. */
+  function videoProgress(v, pos, dur, playedSec) {
+    v.max = Math.max(v.max || 0, pos || 0);
+    v.sec = Math.round(((v.sec || 0) + (playedSec || 0)) * 10) / 10;
+    if (dur > 0) {
+      v.dur = dur;
+      v.pct = Math.min(100, Math.round((v.max / dur) * 100));
+      if (!v.done && (v.max >= dur * 0.9 || v.sec >= dur * 0.8)) v.done = true;
+    }
+    return v;
+  }
+
   var ENGINE = {
     iso: iso, parse: parse, today: today, addDays: addDays, diffDays: diffDays, weekday: weekday, mondayOf: mondayOf, isoWeek: isoWeek, fmtDay: fmtDay, fmtShort: fmtShort,
     numWords: numWords, normalize: normalize, tokens: tokens, hasPhrase: hasPhrase, lev: lev, align: align, keyGroups: keyGroups, matchesAccepted: matchesAccepted, pretty: pretty,
@@ -1247,7 +1303,7 @@ html { padding-top: env(safe-area-inset-top, 0px); }
     defaultState: defaultState, migrate: migrate, L: L, logDay: logDay, recordResult: recordResult, lessonScore: lessonScore, lessonStatus: lessonStatus, finishExercises: finishExercises,
     skillLevels: skillLevels, weakestSkill: weakestSkill, addWord: addWord, addConcept: addConcept, review: review, dueItems: dueItems, upcoming: upcoming,
     dayStatus: dayStatus, streak: streak, calendar: calendar, PERIOD_LABEL: PERIOD_LABEL, periodInfo: periodInfo, periodPlan: periodPlan, fmtSlot: fmtSlot, periodObjectives: periodObjectives, TARGETS: TARGETS,
-    weeklyEvolution: weeklyEvolution, recommend: recommend, buildSteps: buildSteps, revisionFor: revisionFor
+    weeklyEvolution: weeklyEvolution, shadowGap: shadowGap, videoProgress: videoProgress, recommend: recommend, buildSteps: buildSteps, revisionFor: revisionFor
   };
   if (typeof module !== "undefined" && module.exports) module.exports = ENGINE;
   root.EM_ENGINE = ENGINE;
@@ -1442,6 +1498,8 @@ html { padding-top: env(safe-area-inset-top, 0px); }
   var NAV_ROUTES = ["home", "library", "watch", "oral", "suivi", "words"];
   function stopAll() {
     if (ui.player && ui.player.playing) pausePlayer();
+    YTM.destroy();
+    if (ui.oral && ui.oral.sh) ui.oral.sh.token++;
     TTS.cancel(); STT.stop();
     if (ui.oral) ui.oral.listening = false;
   }
@@ -1537,6 +1595,29 @@ html { padding-top: env(safe-area-inset-top, 0px); }
       "</section>";
   };
 
+  function videoPill(l) {
+    if (!l.video) return "";
+    var inf = (S.vids || {})[l.video.id], lv = (S.lessons[l.id] || {}).video;
+    if (inf && inf.err != null && !IN_CLAUDE) return '<span class="pill org">Vidéo indisponible</span>';
+    if (lv && lv.done) return '<span class="pill blue">Vidéo vue</span>';
+    return '<span class="pill">▶ YouTube</span>';
+  }
+  function recentHtml() {
+    var rows = Object.keys(S.lessons).map(function (id) {
+      var ls = S.lessons[id], v = ls.video || {};
+      var d = [ls.last, v.last, ls.watched, ls.started].filter(Boolean).sort().pop();
+      return { id: id, d: d, ls: ls };
+    }).filter(function (r) { return r.d && E.lessonById(r.id); }).sort(function (a, b) { return a.d < b.d ? 1 : -1; }).slice(0, 3);
+    if (!rows.length) return "";
+    return '<section class="stack"><h2 class="eyebrow">Récemment</h2><div class="card divide" style="padding:0">' + rows.map(function (r) {
+      var l = E.lessonById(r.id), st = E.lessonStatus(S, r.id), v = r.ls.video;
+      var bits = [E.fmtShort(r.d)];
+      if (v && (v.pct || v.done)) bits.push(v.done ? "vidéo vue" : "vidéo " + v.pct + " %");
+      if (st.pct != null) bits.push("exercices " + st.pct + " %");
+      return '<button class="list-row" style="width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left" data-a="open-lesson" data-v="' + l.id + '">' + tile(l, true) + '<span class="grow stack-sm" style="gap:2px"><span style="font-weight:600">' + esc(l.title) + '</span><span class="small muted">' + esc(bits.join(" · ")) + "</span></span>" + statusPill(st) + "</button>";
+    }).join("") + "</div></section>";
+  }
+
   /* Accueil */
   SCREENS.home = function () {
     var t = E.today(), P = S.profile, pi = E.periodInfo(P, t);
@@ -1572,12 +1653,13 @@ html { padding-top: env(safe-area-inset-top, 0px); }
     var tip = lastB && lastB.tip ? lastB.tip : null;
     h += '<section class="card stack" aria-label="Conseil du coach"><div class="row"><span class="avatar" style="width:36px;height:36px;background:var(--fg)">' + icon("coach", 20, 2.2) + '</span><div class="stack-sm" style="gap:0"><span class="eyebrow">Conseil du coach</span><span class="small muted">' + (tip ? "tiré de ton bilan du " + E.fmtDay(lastB.d) : "pour bien démarrer") + "</span></div></div>" +
       '<p style="font-size:17px;font-weight:600;line-height:1.4">' + esc(tip ? tip.title : "Répète chaque phrase à voix haute juste après la voix, sans lire. 5 fois suffisent.") + '</p><p class="small muted">' + esc(tip ? tip.detail : "Pourquoi : lire en silence entraîne tes yeux, pas ta bouche. Pour parler sans traduire, il faut produire la phrase soi-même.") + "</p>" +
-      (lastB ? '<button class="link" data-a="open-bilan" data-v="' + (S.bilans.length - 1) + '">Relire mon dernier bilan</button>' : "") + "</section>";
+      '<div class="row wrap">' + (rec ? '<button class="btn light" data-a="open-oral" data-v="' + rec.lesson.id + ':shadow">' + icon("mic", 18, 2.2) + "2 min de shadowing</button>" : "") +
+      (lastB ? '<button class="link" data-a="open-bilan" data-v="' + (S.bilans.length - 1) + '">Relire mon dernier bilan</button>' : "") + "</div></section>";
     if (rec) {
-      h += '<section class="card yellow stack" aria-label="Oral du jour"><div class="row-between"><span class="eyebrow" style="color:var(--on-acc);font-weight:800">Oral · 3 min</span><span class="small" style="font-weight:600">' + (STT.ok() ? "micro de l’iPhone" : "à l’écrit ici") + '</span></div><h2 class="h2">Parle avec ' + esc(PARTNER[rec.lesson.partner] || rec.lesson.partner) + '</h2><p>Tu réponds à chaque réplique' + (STT.ok() ? " à voix haute" : "") + ", " + (AI.on ? "Claude corrige ta réponse." : "l’app corrige ta réponse.") + '</p><div class="row"><button class="btn dark big grow" data-a="open-oral" data-v="' + rec.lesson.id + ':role">' + icon("mic", 20, 2.2) + 'Commencer</button><button class="btn big" style="background:transparent;border:2px solid var(--on-acc);color:var(--on-acc)" data-a="open-oral" data-v="' + rec.lesson.id + ':repeat">Répéter</button></div></section>';
+      h += '<section class="card yellow stack" aria-label="Oral du jour"><div class="row-between"><span class="eyebrow" style="color:var(--on-acc);font-weight:800">Oral · 3 min</span><span class="small" style="font-weight:600">' + (STT.ok() ? "micro de l’iPhone" : "à l’écrit ici") + '</span></div><h2 class="h2">Parle avec ' + esc(PARTNER[rec.lesson.partner] || rec.lesson.partner) + '</h2><p>Tu réponds à chaque réplique' + (STT.ok() ? " à voix haute" : "") + ", " + (AI.on ? "Claude corrige ta réponse." : "l’app corrige ta réponse.") + '</p><div class="row"><button class="btn dark big grow" data-a="open-oral" data-v="' + rec.lesson.id + ':role">' + icon("mic", 20, 2.2) + 'Commencer</button><button class="btn big" style="background:transparent;border:2px solid var(--on-acc);color:var(--on-acc)" data-a="open-oral" data-v="' + rec.lesson.id + ':shadow">Shadowing</button></div></section>';
     }
     h += '<section class="grid3" aria-label="Tes chiffres"><button class="stat" data-a="go" data-v="words"><b>' + nWords + '</b><span class="small muted">mots appris</span></button><button class="stat" data-a="go" data-v="suivi"><b>' + st + ' j</b><span class="small muted">d’affilée</span></button><button class="stat' + (due ? " warn" : "") + '" data-a="start-review"><b>' + due + '</b><span class="small">' + (due ? "à réviser" : "révision à faire") + "</span></button></section>";
-    h += '<section class="stack"><div class="row-between"><h2 class="eyebrow">Compétences</h2><span class="small muted">selon tes exercices</span></div><div class="card stack" style="gap:16px">' +
+    h += recentHtml() + '<section class="stack"><div class="row-between"><h2 class="eyebrow">Compétences</h2><span class="small muted">selon tes exercices</span></div><div class="card stack" style="gap:16px">' +
       Object.keys(E.SKILLS).map(function (k) { return meter(E.SKILLS[k].label, sk[k]); }).join("") + "</div></section>";
     if (open.length > 1) {
       h += '<section class="stack"><h2 class="eyebrow">Ensuite pour toi</h2><div class="card divide" style="padding:0">' + open.slice(1, 3).map(function (r) {
@@ -1609,7 +1691,7 @@ html { padding-top: env(safe-area-inset-top, 0px); }
     }
     return '<div class="stack" style="gap:10px">' + list.map(function (l) {
       var st = E.lessonStatus(S, l.id), isRec = l.id === recId;
-      return '<button class="lesson-card' + (isRec ? " is-rec" : "") + '" data-a="open-lesson" data-v="' + l.id + '">' + tile(l) + '<span class="grow stack-sm" style="gap:3px"><span class="t">' + esc(l.title) + '</span><span class="small muted">' + esc(l.fr) + '</span><span class="row wrap" style="gap:6px;margin-top:5px">' + (isRec && st.key !== "maitrisee" ? '<span class="pill acc">Recommandée</span>' : "") + statusPill(st) + '<span class="xs muted">≈ ' + E.lessonMinutes(l) + " min · " + l.accent + " · validée</span></span></span></button>";
+      return '<button class="lesson-card' + (isRec ? " is-rec" : "") + '" data-a="open-lesson" data-v="' + l.id + '">' + tile(l) + '<span class="grow stack-sm" style="gap:3px"><span class="t">' + esc(l.title) + '</span><span class="small muted">' + esc(l.fr) + '</span><span class="row wrap" style="gap:6px;margin-top:5px">' + (isRec && st.key !== "maitrisee" ? '<span class="pill acc">Recommandée</span>' : "") + statusPill(st) + videoPill(l) + '<span class="xs muted">≈ ' + E.lessonMinutes(l) + " min · " + l.accent + " · validée</span></span></span></button>";
     }).join("") + "</div>";
   }
   SCREENS.library = function () {
@@ -1677,7 +1759,8 @@ html { padding-top: env(safe-area-inset-top, 0px); }
     });
     return html;
   }
-  SCREENS.player = function () {
+  SCREENS.player = function () { return ui.player.tab === "video" ? playerVideo() : playerLesson(); };
+  function playerLesson() {
     var P = ui.player, l = E.lessonById(P.id), seg = P.segs[P.idx], ls = S.lessons[l.id] || {};
     var shares = E.chapterShares(l), total = P.segs.length;
     var chapIdx = seg.chapter, inChap = P.segs.filter(function (s) { return s.chapter === chapIdx; }), posInChap = inChap.indexOf(seg);
@@ -1688,6 +1771,7 @@ html { padding-top: env(safe-area-inset-top, 0px); }
     else { var v = l.vocab.filter(function (x) { return x.key === seg.vocab; })[0]; subFr = seg.kind === "word" ? v.fr : (v.exFr || ""); }
     var h = top("back-home", l.title, l.level + " · " + (l.categories.indexOf("conversations") !== -1 ? "Conversation" : "Quotidien") + " · accent " + l.accent,
       '<button class="icon-btn" data-a="fav" aria-pressed="' + (S.favs && S.favs.indexOf(l.id) !== -1) + '" aria-label="Ajouter la leçon aux favoris" style="' + (S.favs && S.favs.indexOf(l.id) !== -1 ? "color:var(--acc)" : "") + '">' + icon("heart", 20) + "</button>");
+    h += playerTabs(P, l);
     h += '<div class="stage">' + scene(l) + '<span class="tag">Leçon originale · voix de ' + (IS_IOS ? "l’iPhone" : "l’appareil") + '</span><div class="subs">' +
       (P.en ? '<p class="en">' + esc(subEn) + "</p>" : "") + (P.fr && subFr ? '<p class="fr">' + esc(subFr) + "</p>" : "") + "</div></div>";
     if (!TTS.ok) h += '<p class="fb bad">La voix n’est pas disponible sur ce navigateur. Lis les sous-titres ci-dessous, ou ouvre l’app dans Safari.</p>';
@@ -1720,21 +1804,22 @@ html { padding-top: env(safe-area-inset-top, 0px); }
       h += "</div>";
     });
     h += "</section>";
-    h += '<div class="stack" style="margin-top:6px"><button class="btn primary big" data-a="start-ex" data-v="' + l.id + '">Passer aux exercices · 7</button><button class="btn big" data-a="open-oral" data-v="' + l.id + ':role">' + icon("mic", 20, 2.2) + 'Jouer le dialogue à l’oral</button><button class="link" style="align-self:center" data-a="go" data-v="watch">Prolonger avec une série sur le même thème</button><p class="small muted" style="text-align:center">La leçon compte comme maîtrisée seulement après les exercices et le bilan.</p></div>';
+    h += '<div class="stack" style="margin-top:6px"><button class="btn primary big" data-a="start-ex" data-v="' + l.id + '">Passer aux exercices · 7</button><button class="btn big" data-a="open-oral" data-v="' + l.id + ':role">' + icon("mic", 20, 2.2) + 'Jouer le dialogue à l’oral</button><button class="btn big" data-a="open-oral" data-v="' + l.id + ':shadow">' + icon("replay", 20) + 'Shadowing sur ce dialogue</button>' + (l.video ? '<button class="btn big" data-a="player-tab" data-v="video">' + icon("play", 18) + 'Voir la vraie vidéo YouTube</button>' : "") + '<button class="link" style="align-self:center" data-a="go" data-v="watch">Prolonger avec une série sur le même thème</button><p class="small muted" style="text-align:center">La leçon compte comme maîtrisée seulement après les exercices et le bilan.</p></div>';
     return h;
-  };
+  }
   function openLesson(id, hard) {
     var l = E.lessonById(id);
     if (!l) return;
     var ls = E.L(S, id);
     if (!ls.started) ls.started = E.today();
     save();
-    ui.player = { id: id, segs: E.segments(l), idx: 0, playing: false, speed: hard ? 1 : (ui.lastSpeed || 1), fr: !hard, en: true, card: null, done: false, token: 0, t0: 0, volume: 1 };
+    ui.player = { id: id, segs: E.segments(l), idx: 0, playing: false, speed: hard ? 1 : (ui.lastSpeed || 1), fr: !hard, en: true, card: null, done: false, token: 0, t0: 0, volume: 1, tab: "lesson", ytErr: null, ytVol: 100, ysh: { on: false, len: 6, start: 0, end: 6, phase: "play" } };
     go("player");
     if (hard) toast("Version difficile : sans traduction, vitesse normale");
   }
   function playerTick() {
     if (ui.route !== "player") return;
+    if (ui.player && ui.player.tab === "video") { ytRefresh(); return; }
     var y = window.scrollY;
     document.getElementById("app").innerHTML = SCREENS.player();
     window.scrollTo(0, y);
@@ -1794,6 +1879,289 @@ html { padding-top: env(safe-area-inset-top, 0px); }
     else playerTick();
   }
 
+  /* ---------- Vidéo YouTube (lecteur officiel YouTube IFrame) ---------- */
+  var YT_ERR = {
+    2: "L’identifiant de la vidéo n’est pas valide.",
+    5: "Le lecteur YouTube n’a pas pu lire la vidéo sur cet appareil.",
+    100: "La vidéo a été supprimée ou rendue privée.",
+    101: "La chaîne n’autorise pas la lecture en dehors de YouTube.",
+    150: "La chaîne n’autorise pas la lecture en dehors de YouTube.",
+    153: "YouTube refuse la lecture intégrée ici.",
+    load: "Le lecteur YouTube n’a pas pu se charger. Vérifie ta connexion."
+  };
+  function vidInfo(vid) { S.vids = S.vids || {}; return S.vids[vid] || (S.vids[vid] = {}); }
+  var YTM = {
+    player: null, vid: null, lesson: null, timer: null, state: -1, cur: 0, dur: 0, rates: [1], rate: 1, lastWall: 0, pending: 0, drag: false, loading: null,
+    alive: function () { return !!(this.player && document.getElementById("yt-region") && ui.route === "player" && ui.player && ui.player.tab === "video"); },
+    load: function () {
+      if (window.YT && window.YT.Player) return Promise.resolve(window.YT);
+      if (this.loading) return this.loading;
+      var self = this;
+      this.loading = new Promise(function (res, rej) {
+        var prev = window.onYouTubeIframeAPIReady;
+        window.onYouTubeIframeAPIReady = function () { if (prev) try { prev(); } catch (e) { } res(window.YT); };
+        var s = document.createElement("script");
+        s.src = "https://www.youtube.com/iframe_api"; s.async = true;
+        s.onerror = function () { self.loading = null; rej("load"); };
+        document.head.appendChild(s);
+        setTimeout(function () { if (!(window.YT && window.YT.Player)) { self.loading = null; rej("load"); } }, 15000);
+      });
+      return this.loading;
+    },
+    lv: function () {
+      var ls = E.L(S, this.lesson), t = E.today();
+      if (!ls.started) ls.started = t;
+      ls.video = ls.video || { sec: 0, max: 0, pct: 0 };
+      ls.video.last = t;
+      return ls.video;
+    },
+    mount: function (lessonId) {
+      var self = this, l = E.lessonById(lessonId);
+      this.destroy();
+      this.vid = l.video.id; this.lesson = lessonId; this.cur = 0; this.state = -1; this.rates = [1]; this.rate = 1;
+      this.dur = vidInfo(this.vid).dur || l.video.duration || 0;
+      this.load().then(function (YT) {
+        if (!document.getElementById("yt-host") || !ui.player || ui.player.tab !== "video" || ui.player.id !== lessonId) return;
+        self.player = new YT.Player("yt-host", {
+          videoId: self.vid, host: "https://www.youtube-nocookie.com", width: "100%", height: "100%",
+          playerVars: { playsinline: 1, rel: 0, modestbranding: 1, cc_load_policy: 1, cc_lang_pref: "en", hl: "fr", origin: location.origin },
+          events: {
+            onReady: function () { self.onReady(); },
+            onStateChange: function (e) { self.onState(e.data); },
+            onError: function (e) { self.onError(e.data); },
+            onPlaybackRateChange: function (e) { self.rate = e.data; ytRefresh(); }
+          }
+        });
+        self.timer = setInterval(function () { self.tick(); }, 400);
+      }).catch(function () { if (ui.player) { ui.player.ytErr = "load"; render(); } });
+    },
+    onReady: function () {
+      var p = this.player;
+      try {
+        var r = p.getAvailablePlaybackRates() || [1];
+        this.rates = [0.5, 0.75, 1, 1.25].filter(function (x) { return r.indexOf(x) !== -1; });
+        if (!this.rates.length) this.rates = [1];
+        var d = p.getDuration();
+        if (d > 0) { this.dur = d; vidInfo(this.vid).dur = Math.round(d); delete vidInfo(this.vid).err; save(); }
+      } catch (e) { }
+      var ld = document.querySelector(".yt-loading");
+      if (ld) ld.hidden = true;
+      ytRefresh();
+    },
+    onState: function (st) {
+      this.tick();
+      this.flush();
+      this.state = st;
+      if (st === 1) { this.lastWall = Date.now(); this.lv(); }
+      if (st === 0) { var v = this.lv(), was = v.done; E.videoProgress(v, this.dur, this.dur, 0); if (!was && v.done) toast("Vidéo vue en entier. Fais les exercices pour maîtriser la leçon."); save(); }
+      ytRefresh();
+    },
+    onError: function (code) {
+      if (!ui.player) return;
+      ui.player.ytErr = code;
+      vidInfo(this.vid).err = code; vidInfo(this.vid).d = E.today();
+      save();
+      this.destroy();
+      render();
+    },
+    tick: function () {
+      var p = this.player;
+      if (!p || typeof p.getCurrentTime !== "function") return;
+      var cur = 0, d = this.dur;
+      try { cur = p.getCurrentTime() || 0; d = p.getDuration() || d; } catch (e) { return; }
+      this.cur = cur; if (d > 0) this.dur = d;
+      if (this.state === 1) {
+        var now = Date.now(), played = Math.min(2, (now - this.lastWall) / 1000);
+        this.lastWall = now; this.pending += played;
+        var v = this.lv(), was = v.done;
+        E.videoProgress(v, cur, this.dur, played);
+        if (!was && v.done) { toast("Vidéo vue en entier. Fais les exercices pour maîtriser la leçon."); save(); }
+        if (this.pending >= 15) this.flush();
+        var ys = ui.player && ui.player.ysh;
+        if (ys && ys.on && ys.phase === "play" && cur >= ys.end) { try { p.pauseVideo(); } catch (e) { } ys.phase = "turn"; ytRefresh(); return; }
+      }
+      var t = document.getElementById("yt-time"), sk = document.getElementById("yt-seek"), pc = document.getElementById("yt-pct");
+      if (t && !this.drag) t.textContent = mmss(cur) + " / " + (this.dur ? mmss(this.dur) : "–");
+      if (sk && !this.drag) { sk.max = String(Math.max(1, Math.round(this.dur))); sk.value = String(Math.round(cur)); }
+      if (pc) { var lv = (S.lessons[this.lesson] || {}).video; pc.textContent = lv && lv.done ? "Vue en entier ✓" : "Vue à " + ((lv && lv.pct) || 0) + " %"; }
+    },
+    flush: function () {
+      if (this.pending > 0.5) { E.logDay(S, E.today(), "watch", this.pending / 60); this.pending = 0; save(); }
+    },
+    call: function (fn, a, b) { try { if (this.player && this.player[fn]) this.player[fn](a, b); } catch (e) { } },
+    destroy: function () {
+      clearInterval(this.timer); this.timer = null;
+      if (this.player) { this.tick(); this.flush(); try { this.player.destroy(); } catch (e) { } }
+      this.player = null; this.state = -1;
+    }
+  };
+  function ytRefresh() {
+    if (!YTM.alive()) { render(); return; }
+    var y = window.scrollY;
+    document.getElementById("pv-top").innerHTML = pvTop();
+    document.getElementById("pv-bottom").innerHTML = pvBottom();
+    window.scrollTo(0, y);
+  }
+  function playerTabs(P, l) {
+    if (!l.video) return "";
+    return '<div class="seg" role="group" aria-label="Support de la leçon" style="grid-template-columns:repeat(2,minmax(0,1fr))"><button data-a="player-tab" data-v="lesson" aria-pressed="' + (P.tab !== "video") + '">Leçon · voix</button><button data-a="player-tab" data-v="video" aria-pressed="' + (P.tab === "video") + '">' + icon("play", 14) + " Vidéo YouTube</button></div>";
+  }
+  function pvTop() {
+    var P = ui.player, l = E.lessonById(P.id);
+    return top("back-home", l.title, "Vidéo YouTube · " + l.video.channel) + playerTabs(P, l);
+  }
+  function ytRegion() {
+    var P = ui.player, l = E.lessonById(P.id), v = l.video;
+    if (IN_CLAUDE) {
+      return '<div class="stage">' + scene(l) + '<span class="tag">YouTube · ' + esc(v.channel) + '</span><div class="subs"><a class="btn primary" href="' + v.url + '" target="_blank" rel="noopener">' + icon("play", 18) + "Regarder sur YouTube" + icon("ext", 16) + "</a></div></div>" +
+        notice("Dans Claude, YouTube ne peut pas s’afficher à l’intérieur de l’app : la vidéo s’ouvre sur YouTube. Dans ta version GitHub, elle se lit directement ici, avec la vitesse, la réécoute et le shadowing.");
+    }
+    var reason = P.ytErr != null ? (YT_ERR[P.ytErr] || "La vidéo n’a pas pu être lue.") : (navigator.onLine === false ? "Tu es hors connexion : la vidéo YouTube a besoin d’internet. La leçon de l’app, elle, marche hors ligne." : null);
+    if (reason) {
+      return '<section class="card stack" style="border-color:var(--org)"><span class="pill org" style="align-self:flex-start">Vidéo indisponible ici</span><p>' + esc(reason) + '</p><div class="row wrap"><button class="btn primary grow" data-a="player-tab" data-v="lesson">Revenir à la leçon de l’app</button><a class="btn grow" href="' + v.url + '" target="_blank" rel="noopener">Ouvrir sur YouTube' + icon("ext", 16) + '</a></div><button class="link" data-a="yt-retry">Réessayer</button></section>';
+    }
+    return '<div class="yt-frame"><div id="yt-host"></div><div class="yt-loading">Chargement du lecteur YouTube…</div></div>';
+  }
+  function pvBottom() {
+    var P = ui.player, l = E.lessonById(P.id), v = l.video, ls = S.lessons[l.id] || {}, lv = ls.video || {};
+    var embed = !IN_CLAUDE && P.ytErr == null && navigator.onLine !== false;
+    var dur = YTM.dur || vidInfo(v.id).dur || v.duration || 0;
+    var h = "";
+    if (embed) {
+      var playing = YTM.state === 1, ys = P.ysh;
+      h += '<div class="stack-sm"><label class="sr" for="yt-seek">Position dans la vidéo</label><input type="range" id="yt-seek" min="0" max="' + Math.max(1, Math.round(dur)) + '" step="1" value="' + Math.round(YTM.cur) + '" data-yt="seek"' + (YTM.player ? "" : " disabled") + '><div class="row-between small muted num"><span id="yt-time">' + mmss(YTM.cur) + " / " + (dur ? mmss(dur) : "–") + '</span><span id="yt-pct">' + (lv.done ? "Vue en entier ✓" : "Vue à " + (lv.pct || 0) + " %") + "</span></div></div>";
+      h += '<div class="controls" style="justify-content:center;gap:18px"><button class="ctl" data-a="yt-back" aria-label="Reculer de 5 secondes">' + icon("replay") + '</button><button class="ctl play" data-a="yt-play" aria-label="' + (playing ? "Pause" : "Lecture") + '"' + (YTM.player ? "" : " disabled") + ">" + icon(playing ? "pause" : "play", 28) + '</button><button class="ctl" data-a="yt-fwd" aria-label="Avancer de 10 secondes">' + icon("next") + "</button></div>";
+      if (YTM.rates.length > 1) h += '<div class="seg acc" role="group" aria-label="Vitesse de la vidéo" style="grid-template-columns:repeat(' + YTM.rates.length + ',minmax(0,1fr))">' + YTM.rates.map(function (r) { return '<button data-a="yt-rate" data-v="' + r + '" aria-pressed="' + (YTM.rate === r) + '" style="min-height:38px">' + String(r).replace(".", ",") + "×</button>"; }).join("") + "</div>";
+      else if (YTM.player) h += '<p class="xs muted">Vitesse : non réglable pour cette vidéo.</p>';
+      if (!IS_IOS) h += '<label class="row" style="min-height:44px;color:var(--mut)">' + icon("speaker") + '<span style="color:var(--fg);font-size:14px">Volume</span><input type="range" id="yt-vol" min="0" max="100" value="' + (P.ytVol == null ? 100 : P.ytVol) + '" data-yt="vol" style="flex:1"></label>';
+      h += '<section class="card stack"><div class="row-between" style="align-items:center"><div class="stack-sm" style="gap:2px"><b>Shadowing vidéo</b><span class="small muted">La vidéo s’arrête pour que tu répètes chaque passage.</span></div><button class="btn' + (ys.on ? " primary" : "") + '" style="min-height:40px" data-a="ysh-toggle" aria-pressed="' + ys.on + '">' + (ys.on ? "Activé" : "Activer") + "</button></div>";
+      if (ys.on) {
+        h += '<div class="row"><span class="small muted">Passages de</span><div class="seg acc" style="grid-template-columns:repeat(3,minmax(0,1fr));flex:1">' + [4, 6, 8].map(function (n) { return '<button data-a="ysh-len" data-v="' + n + '" aria-pressed="' + (ys.len === n) + '" style="min-height:38px">' + n + " s</button>"; }).join("") + "</div></div>";
+        if (ys.phase === "turn") h += '<div class="card yellow stack-sm"><b style="font-size:17px">À toi : répète le passage</b><span class="small num">' + mmss(ys.start) + " → " + mmss(ys.end) + ' · imite le rythme et l’intonation</span><div class="row"><button class="btn dark grow" data-a="ysh-replay">' + icon("replay", 18) + 'Réécouter</button><button class="btn grow" style="background:transparent;border:2px solid var(--on-acc);color:var(--on-acc)" data-a="ysh-next">Passage suivant</button></div></div>';
+        else h += '<p class="small muted">Lance la vidéo : elle s’arrêtera toutes les ' + ys.len + " secondes.</p>";
+      }
+      h += "</section>";
+    } else if (IN_CLAUDE) {
+      h += '<button class="btn' + (lv.done ? "" : " primary") + '" data-a="v-watched"' + (lv.done ? " disabled" : "") + ">" + (lv.done ? "Vidéo vue ✓" : "J’ai regardé la vidéo en entier") + "</button>";
+    }
+    h += '<section class="card stack-sm"><p class="eyebrow">La vidéo</p><b>' + esc(v.title) + "</b>" +
+      '<p class="small muted">' + esc(v.about) + "</p>" +
+      '<dl class="small" style="margin:6px 0 0;display:grid;grid-template-columns:auto 1fr;gap:4px 12px">' +
+      "<dt class=\"muted\">Chaîne</dt><dd style=\"margin:0\">" + esc(v.channel) + "</dd>" +
+      "<dt class=\"muted\">Niveau</dt><dd style=\"margin:0\">" + esc(v.level) + "</dd>" +
+      "<dt class=\"muted\">Langue</dt><dd style=\"margin:0\">Anglais" + (v.accent ? ", accent " + esc(v.accent) : "") + "</dd>" +
+      "<dt class=\"muted\">Durée</dt><dd style=\"margin:0\">" + (dur ? mmss(dur) : "affichée au lancement") + "</dd>" +
+      "<dt class=\"muted\">Sous-titres</dt><dd style=\"margin:0\">" + esc(v.subtitles || "Bouton CC du lecteur, si la chaîne en propose") + "</dd>" +
+      "<dt class=\"muted\">Source</dt><dd style=\"margin:0\">YouTube · page vérifiée le " + E.fmtDay(v.validation.date) + "</dd></dl>" +
+      '<a class="link" href="' + v.url + '" target="_blank" rel="noopener">Voir la vidéo d’origine sur YouTube' + icon("ext", 16) + "</a>" +
+      '<p class="xs muted">L’app ne contrôle pas les sous-titres de YouTube et n’en récupère pas le texte. Les sous-titres interactifs EN/FR sont dans l’onglet Leçon.</p></section>';
+    h += '<section class="stack-sm"><label class="field"><span style="color:var(--fg);font-size:14px">Une phrase entendue dans la vidéo ?</span><div class="row"><input class="input grow" id="f-vheard" data-f="vheard" placeholder="Ex. : Can I have a small latte?" value="' + esc(ui.f.vheard || "") + '"><button class="btn light" data-a="add-vheard"' + (ui.busyHeard ? " disabled" : "") + ">" + (ui.busyHeard ? '<span class="dots">Vérif</span>' : "Ajouter") + '</button></div></label><p class="small muted">Note 3 phrases utiles : elles rejoignent tes révisions.</p></section>';
+    h += '<div class="stack"><button class="btn primary big" data-a="start-ex" data-v="' + l.id + '">Passer aux exercices · 7</button><button class="btn big" data-a="open-oral" data-v="' + l.id + ':shadow">' + icon("mic", 20, 2.2) + 'Shadowing sur le dialogue de la leçon</button><p class="small muted" style="text-align:center">Regarder la vidéo ne suffit pas : la leçon est maîtrisée à 80 % aux exercices.</p></div>';
+    return h;
+  }
+  function playerVideo() {
+    return '<div id="pv-top" class="stack">' + pvTop() + '</div><div id="yt-region">' + ytRegion() + '</div><div id="pv-bottom" class="stack">' + pvBottom() + "</div>";
+  }
+  function addHeard(field, lessonId, source) {
+    var txt = (ui.f[field] || "").trim();
+    if (!txt) { toast("Écris la phrase d’abord."); return; }
+    var t = E.today(), en = txt, fr = "";
+    var done = function () {
+      E.addWord(S, { en: en, fr: fr }, lessonId || null, source, t);
+      ui.f[field] = ""; ui.busyHeard = false; save();
+      toast("Ajouté à tes révisions"); render();
+    };
+    if (!AI.on) { done(); return; }
+    ui.busyHeard = true; render();
+    AI.json("Un élève francophone a noté une phrase entendue dans une vidéo ou une série en anglais : « " + txt + " ». Corrige-la si besoin (orthographe, ponctuation) sans changer le sens, et traduis-la. Réponds uniquement avec un objet JSON : {\"en\": \"la phrase corrigée\", \"fr\": \"traduction naturelle\"}")
+      .then(function (r) { if (r && r.en) { en = String(r.en); fr = String(r.fr || ""); } })
+      .catch(function () { })
+      .then(done);
+  }
+
+  /* ---------- Shadowing sur les leçons ---------- */
+  function shState() { return { i: 0, round: 0, phase: "idle", text: "full", speed: 1, rounds: 2, scores: [], mic: false, token: 0, t0: 0, heard: null, reveal: false, gapMs: 0, gapStart: 0, rating: null }; }
+  function shadowView(O, l) {
+    var sh = O.sh, lines = l.lines, n = lines.length;
+    var h = "";
+    if (sh.phase === "done") {
+      var avg = sh.scores.length ? Math.round(sh.scores.reduce(function (a, b) { return a + b; }, 0) / sh.scores.length) : null;
+      h += '<section class="card card-lg stack"><b class="display" style="font-size:24px">Shadowing terminé</b><p class="muted">' + n + " phrases × " + sh.rounds + " · " + Math.max(1, Math.round((Date.now() - sh.t0) / 60000)) + " min" + (avg != null ? " · " + avg + " % de mots reconnus" : "") + "</p>" +
+        '<p style="font-weight:600">C’était comment ?</p><div class="row">' + [["facile", "Facile"], ["correct", "Correct"], ["difficile", "Difficile"]].map(function (x) { return '<button class="btn grow' + (sh.rating === x[0] ? " primary" : "") + '" data-a="sh-rate" data-v="' + x[0] + '" aria-pressed="' + (sh.rating === x[0]) + '">' + x[1] + "</button>"; }).join("") + "</div>" +
+        (sh.rating ? '<p class="small muted">' + (sh.rating === "facile" ? (sh.text === "none" ? "Passe à 1× si ce n’est pas déjà fait, ou à la leçon suivante." : "Refais-le sans texte : c’est là que ça rentre vraiment.") : sh.rating === "difficile" ? "Normal au début. Refais-le demain à 0,75× avec le texte : la prononciation est ajoutée à tes révisions." : "Refais-le demain, une étape plus difficile (moins de texte ou vitesse 1×).") + "</p>" : "") +
+        '<div class="row"><button class="btn grow" data-a="sh-restart" data-v="' + sh.text + '">Recommencer</button><button class="btn light grow" data-a="sh-restart" data-v="none">Sans texte</button></div></section>';
+      return h;
+    }
+    var running = sh.phase === "listen" || sh.phase === "turn";
+    h += '<p class="small muted">Écoute la phrase, puis répète-la tout de suite en imitant le rythme et la mélodie. Commence avec le texte, puis enlève-le : le but est de répéter sans lire.</p>';
+    h += '<div class="stack-sm"><div class="seg" role="group" aria-label="Texte affiché" style="grid-template-columns:repeat(3,minmax(0,1fr))">' + [["full", "Texte + FR"], ["en", "Texte"], ["none", "Sans texte"]].map(function (x) { return '<button data-a="sh-text" data-v="' + x[0] + '" aria-pressed="' + (sh.text === x[0]) + '" style="min-height:40px">' + x[1] + "</button>"; }).join("") + "</div>" +
+      '<div class="row"><div class="seg acc" role="group" aria-label="Vitesse" style="grid-template-columns:repeat(2,minmax(0,1fr));flex:1">' + [0.75, 1].map(function (x) { return '<button data-a="sh-speed" data-v="' + x + '" aria-pressed="' + (sh.speed === x) + '" style="min-height:40px">' + String(x).replace(".", ",") + "×</button>"; }).join("") + '</div><div class="seg" role="group" aria-label="Répétitions par phrase" style="grid-template-columns:repeat(3,minmax(0,1fr));flex:1.3">' + [1, 2, 3].map(function (x) { return '<button data-a="sh-rounds" data-v="' + x + '" aria-pressed="' + (sh.rounds === x) + '" style="min-height:40px">' + x + "×</button>"; }).join("") + "</div></div>" +
+      (STT.ok() ? '<button class="btn' + (sh.mic ? " primary" : "") + '" style="min-height:42px" data-a="sh-mic" aria-pressed="' + sh.mic + '">' + icon("mic", 18, 2.2) + (sh.mic ? "Noter ma voix : oui" : "Noter ma voix : non") + "</button>" : "") + "</div>";
+    var ln = lines[Math.min(sh.i, n - 1)];
+    var showTxt = sh.text !== "none" || sh.reveal;
+    h += '<section class="card card-lg stack" style="min-height:220px"><div class="row-between small muted num"><span>Phrase ' + (Math.min(sh.i, n - 1) + 1) + " sur " + n + (sh.rounds > 1 ? " · tour " + (sh.round + 1) + "/" + sh.rounds : "") + '</span><span class="sp" style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">' + esc(ln.sp) + "</span></div>" +
+      (showTxt ? '<p class="display" style="font-size:24px;line-height:1.25">' + esc(ln.en) + "</p>" + (sh.text === "full" ? '<p class="small muted">' + esc(ln.fr) + "</p>" : "") : '<p class="display muted" style="font-size:22px">Écoute, puis répète</p><button class="link" data-a="sh-reveal">Voir la phrase</button>');
+    if (sh.phase === "listen") h += '<p class="row" style="color:var(--blue-fg);font-weight:700">' + icon("speaker", 18) + "Écoute…</p>";
+    if (sh.phase === "turn") {
+      var el = Math.max(0, Date.now() - sh.gapStart);
+      h += '<p class="row" style="color:var(--acc);font-weight:800;font-size:18px">' + icon("mic", 20, 2.2) + "À toi : répète !</p>" + '<div class="countdown" aria-hidden="true"><i style="animation-duration:' + sh.gapMs + "ms;animation-delay:-" + el + 'ms"></i></div>';
+    }
+    if (sh.phase === "paused") h += '<p class="small muted">En pause</p>';
+    if (sh.heard) h += '<div class="row wrap" style="gap:6px">' + sh.heard.words.map(function (w) { return '<span class="pill ' + (w.status === "ok" ? "blue" : "org") + '">' + esc(w.word) + (w.status === "ok" ? " ✓" : " ✗") + "</span>"; }).join("") + '<span class="small muted">' + sh.heard.pct + " %</span></div>";
+    h += "</section>";
+    h += '<div class="controls" style="justify-content:center;gap:18px"><button class="ctl" data-a="sh-replay" aria-label="Réécouter la phrase">' + icon("replay") + '</button><button class="ctl play" data-a="sh-play" aria-label="' + (running ? "Pause" : "Lancer") + '">' + icon(running ? "pause" : "play", 28) + '</button><button class="ctl" data-a="sh-next" aria-label="Phrase suivante">' + icon("next") + "</button></div>";
+    if (sh.phase === "idle") h += '<p class="small muted" style="text-align:center">' + n + " phrases × " + sh.rounds + " ≈ " + Math.max(1, Math.round(lines.reduce(function (a, x) { return a + (E.segSeconds({ text: x.en, rate: sh.speed }) + E.shadowGap(x.en, sh.speed)) * sh.rounds; }, 0) / 60)) + " min</p>";
+    return h;
+  }
+  function shStep() {
+    var O = ui.oral, sh = O.sh, l = E.lessonById(O.id), lines = l.lines, my = ++sh.token;
+    if (sh.i >= lines.length) { shFinish(); return; }
+    if (!sh.t0) sh.t0 = Date.now();
+    var ln = lines[sh.i];
+    sh.phase = "listen"; sh.heard = null;
+    render();
+    TTS.speak(ln.en, { lang: l.lang, rate: sh.speed }).then(function () {
+      if (my !== sh.token || ui.route !== "oral" || ui.oral !== O) return;
+      sh.phase = "turn"; sh.gapMs = Math.round(E.shadowGap(ln.en, sh.speed) * 1000); sh.gapStart = Date.now();
+      render();
+      var after = function () {
+        if (my !== sh.token) return;
+        sh.round++;
+        if (sh.round >= sh.rounds) { sh.round = 0; sh.i++; sh.reveal = false; }
+        shStep();
+      };
+      if (sh.mic && STT.ok()) {
+        var stopper = setTimeout(function () { if (my === sh.token) STT.stop(); }, sh.gapMs + 2500);
+        STT.listen(l.lang).then(function (alts) {
+          clearTimeout(stopper);
+          if (my !== sh.token) return;
+          var best = null;
+          alts.forEach(function (a) { var r = E.scoreRepeat(ln.en, a); if (!best || r.pct > best.pct) best = r; });
+          sh.heard = best; sh.scores.push(best.pct);
+          render();
+          setTimeout(after, 900);
+        }).catch(function (err) {
+          clearTimeout(stopper);
+          if (my !== sh.token) return;
+          if (err !== "no-speech") { sh.mic = false; toast(micMessage(err)); }
+          setTimeout(after, 300);
+        });
+      } else setTimeout(after, sh.gapMs);
+    });
+  }
+  function shStop(sh) { sh.token++; TTS.cancel(); STT.stop(); }
+  function shFinish() {
+    var O = ui.oral, sh = O.sh, t = E.today();
+    sh.phase = "done";
+    E.logDay(S, t, "oral", (Date.now() - sh.t0) / 60000);
+    if (sh.scores.length) E.recordResult(S, O.id, "shadow", Math.round(sh.scores.reduce(function (a, b) { return a + b; }, 0) / sh.scores.length), t);
+    var ticked = 0;
+    (S.plan || []).forEach(function (p) { if (!p.done && p.due <= t && /shadow/i.test(p.title + " " + p.detail)) { p.done = true; p.doneAt = t; ticked++; } });
+    save();
+    render();
+    if (ticked) toast("Étape « Shadowing » de ton plan cochée");
+  }
+
   /* Oral : jeu de rôle et répétition */
   function oralState(id, mode, line) {
     var l = E.lessonById(id);
@@ -1801,15 +2169,15 @@ html { padding-top: env(safe-area-inset-top, 0px); }
     targets.push({ i: -1, en: l.exercises.oral.en, fr: "" });
     var start = 0;
     if (line != null) { var k = targets.map(function (x) { return x.i; }).indexOf(Number(line)); if (k !== -1) start = k; }
-    return { id: id, mode: mode || "role", log: [], pos: 0, waiting: false, listening: false, busy: false, help: false, done: false, scores: [], targets: targets, t: start, attempts: [], result: null, t0: Date.now() };
+    return { id: id, mode: mode || "role", log: [], pos: 0, waiting: false, listening: false, busy: false, help: false, done: false, scores: [], targets: targets, t: start, attempts: [], result: null, t0: Date.now(), sh: shState() };
   }
   SCREENS.oral = function () {
     var O = ui.oral, l = E.lessonById(O.id);
     var h = top(ui.p && ui.p.fromTab ? "back-home" : "back-player", "Oral", l.title + " · " + l.level);
-    h += '<div class="seg" role="group" aria-label="Type d’exercice oral" style="grid-template-columns:repeat(2,minmax(0,1fr))"><button data-a="oral-mode" data-v="role" aria-pressed="' + (O.mode === "role") + '">Jeu de rôle</button><button data-a="oral-mode" data-v="repeat" aria-pressed="' + (O.mode === "repeat") + '">Répéter</button></div>';
+    h += '<div class="seg" role="group" aria-label="Type d’exercice oral" style="grid-template-columns:repeat(3,minmax(0,1fr))"><button data-a="oral-mode" data-v="role" aria-pressed="' + (O.mode === "role") + '">Jeu de rôle</button><button data-a="oral-mode" data-v="repeat" aria-pressed="' + (O.mode === "repeat") + '">Répéter</button><button data-a="oral-mode" data-v="shadow" aria-pressed="' + (O.mode === "shadow") + '">Shadowing</button></div>';
     if (ui.p && ui.p.fromTab) h += '<div class="chips">' + C.LESSONS.map(function (x) { return '<button class="chip" data-a="oral-lesson" data-v="' + x.id + '" aria-pressed="' + (x.id === O.id) + '">' + esc(x.title) + "</button>"; }).join("") + "</div>";
     if (!STT.ok()) h += '<p class="fb bad">' + (STT.Ctor && !IN_CLAUDE ? micMessage("not-allowed") : IN_CLAUDE ? "Le micro n’est pas accessible dans la version claude.ai. Réponds par écrit ici, ou ouvre ta version GitHub dans Safari pour parler." : "Ce navigateur ne reconnaît pas la voix. Ouvre l’app dans Safari (iPhone) ou Chrome, ou réponds par écrit.") + (IN_CLAUDE ? ' <a href="' + PAGES_URL + '" target="_blank" rel="noopener">Ouvrir la version GitHub</a>' : "") + "</p>";
-    if (O.mode === "role") h += roleView(O, l); else h += repeatView(O, l);
+    if (O.mode === "role") h += roleView(O, l); else if (O.mode === "shadow") h += shadowView(O, l); else h += repeatView(O, l);
     h += notice((STT.ok() ? "Ton appareil transcrit ce que tu dis : l’app vérifie les mots compris, pas ton accent au son près. " : "") + "Seul le texte est sauvegardé, jamais ta voix.");
     return h;
   };
@@ -2294,7 +2662,7 @@ html { padding-top: env(safe-area-inset-top, 0px); }
     h += '<div class="card divide" style="padding:0">' + keys.map(function (k) {
       var w = S.words[k], l = w.lesson ? E.lessonById(w.lesson) : null;
       var conf = ui.confirm === "del:" + k;
-      return '<div class="list-row"><button class="icon-btn" style="width:40px;height:40px" data-a="say-plain" data-v="' + esc(w.en) + '|' + (l ? l.lang : "en-US") + '" aria-label="Écouter ' + esc(w.en) + '">' + icon("speaker", 18) + '</button><span class="grow stack-sm" style="gap:1px"><b>' + esc(w.en) + '</b><span class="small muted">' + esc(w.fr || "") + '</span></span><span class="xs muted" style="text-align:right">' + (w.next <= E.today() ? '<span style="color:var(--acc);font-weight:700">à revoir</span>' : esc(E.fmtShort(w.next))) + "</span>" +
+      return '<div class="list-row"><button class="icon-btn" style="width:40px;height:40px" data-a="say-plain" data-v="' + esc(w.en) + '|' + (l ? l.lang : "en-US") + '" aria-label="Écouter ' + esc(w.en) + '">' + icon("speaker", 18) + '</button><span class="grow stack-sm" style="gap:1px"><b>' + esc(w.en) + '</b><span class="small muted">' + esc(w.fr || "") + (w.source === "video" ? " · vu dans une vidéo" : w.source === "watch" ? " · entendu dans une série" : "") + '</span></span><span class="xs muted" style="text-align:right">' + (w.next <= E.today() ? '<span style="color:var(--acc);font-weight:700">à revoir</span>' : esc(E.fmtShort(w.next))) + "</span>" +
         (conf ? '<button class="btn" style="min-height:40px;font-size:13px;color:var(--org);border-color:var(--org)" data-a="del-word" data-v="' + esc(k) + '">Supprimer</button>' : '<button class="icon-btn" style="width:40px;height:40px;background:none;border:0;color:var(--mut)" data-a="ask-del" data-v="' + esc(k) + '" aria-label="Supprimer ' + esc(w.en) + '">' + icon("trash", 18) + "</button>") + "</div>";
     }).join("") + "</div>";
     return h;
@@ -2325,7 +2693,7 @@ html { padding-top: env(safe-area-inset-top, 0px); }
       }
       h += "</section>";
     } else if (it.kind === "plan") {
-      h += '<section class="card card-lg stack"><span class="eyebrow">Plan du coach · ' + esc(it.item.when || "") + '</span><h2 class="h2">' + esc(it.item.title) + "</h2><p>" + esc(it.item.detail) + "</p>" + (/shadow|répète|oral|voix/i.test(it.item.title + it.item.detail) ? '<button class="btn" data-a="open-oral" data-v="' + (it.item.lesson || "") + ':repeat">' + icon("mic", 18, 2.2) + "Ouvrir l’oral</button>" : "") + '</section><div class="row"><button class="btn big grow" data-a="rev-mark" data-v="0">Demain</button><button class="btn primary big grow" data-a="rev-mark" data-v="1">C’est fait</button></div>';
+      h += '<section class="card card-lg stack"><span class="eyebrow">Plan du coach · ' + esc(it.item.when || "") + '</span><h2 class="h2">' + esc(it.item.title) + "</h2><p>" + esc(it.item.detail) + "</p>" + (/shadow|répète|oral|voix/i.test(it.item.title + it.item.detail) ? '<button class="btn" data-a="open-oral" data-v="' + (it.item.lesson || "") + ':shadow">' + icon("mic", 18, 2.2) + "Faire le shadowing</button>" : "") + '</section><div class="row"><button class="btn big grow" data-a="rev-mark" data-v="0">Demain</button><button class="btn primary big grow" data-a="rev-mark" data-v="1">C’est fait</button></div>';
     } else if (it.kind === "lesson") {
       var ll = E.lessonById(it.key);
       h += '<section class="card card-lg stack">' + tile(ll) + '<h2 class="h2">Revois « ' + esc(ll.title) + ' »</h2><p class="muted">Écoute le dialogue sans la traduction. Si tu comprends tout, c’est acquis.</p><button class="btn" data-a="open-lesson-hard" data-v="' + ll.id + '">' + icon("play", 18) + 'Revoir sans traduction</button></section><div class="row"><button class="btn big grow" data-a="rev-mark" data-v="0">Pas encore</button><button class="btn primary big grow" data-a="rev-mark" data-v="1">Tout compris</button></div>';
@@ -2355,6 +2723,7 @@ html { padding-top: env(safe-area-inset-top, 0px); }
     return '<div class="in">' + items.map(function (x) { return '<button data-a="nav" data-v="' + x[0] + '"' + (r === x[0] ? ' aria-current="page"' : "") + ">" + icon(x[1], 24) + x[2] + "</button>"; }).join("") + "</div>";
   }
   function render() {
+    if (YTM.alive()) { ytRefresh(); return; }
     var app = document.getElementById("app"), nav = document.getElementById("nav");
     var y = window.scrollY;
     var fn = SCREENS[ui.route] || SCREENS.home;
@@ -2409,6 +2778,47 @@ html { padding-top: env(safe-area-inset-top, 0px); }
     "watch-level": function (v) { ui.watch.level = v; render(); },
     "watch-theme": function (v) { ui.watch.theme = v; render(); },
     watched: function (v) { var t = E.today(); S.watched.push({ d: t, title: v, min: 10 }); E.logDay(S, t, "watch", 10); save(); toast("Noté : « " + v + " » dans ton suivi"); render(); },
+    "add-vheard": function () { addHeard("vheard", ui.player.id, "video"); },
+    "player-tab": function (v) {
+      var P = ui.player;
+      if (P.tab === v) return;
+      if (v === "video") {
+        if (P.playing) pausePlayer();
+        TTS.cancel(); P.card = null; P.tab = "video"; P.ytErr = null;
+        render(); window.scrollTo(0, 0);
+        if (!IN_CLAUDE && navigator.onLine !== false) YTM.mount(P.id);
+      } else { YTM.destroy(); P.tab = "lesson"; render(); window.scrollTo(0, 0); }
+    },
+    "yt-retry": function () { var P = ui.player; P.ytErr = null; delete vidInfo(E.lessonById(P.id).video.id).err; render(); if (!IN_CLAUDE) YTM.mount(P.id); },
+    "yt-play": function () {
+      var ys = ui.player.ysh;
+      if (YTM.state === 1) { YTM.call("pauseVideo"); return; }
+      if (ys.on && ys.phase === "turn") { A["ysh-next"](); return; }
+      if (ys.on) { ys.start = YTM.cur; ys.end = YTM.cur + ys.len; ys.phase = "play"; }
+      YTM.call("playVideo");
+    },
+    "yt-back": function () { var t = Math.max(0, YTM.cur - 5); YTM.call("seekTo", t, true); YTM.cur = t; var ys = ui.player.ysh; if (ys.on) { ys.start = t; ys.end = t + ys.len; ys.phase = "play"; } YTM.call("playVideo"); },
+    "yt-fwd": function () { var t = Math.min(YTM.dur || Infinity, YTM.cur + 10); YTM.call("seekTo", t, true); YTM.cur = t; var ys = ui.player.ysh; if (ys.on) { ys.start = t; ys.end = t + ys.len; ys.phase = "play"; } },
+    "yt-rate": function (v) { YTM.call("setPlaybackRate", Number(v)); YTM.rate = Number(v); ytRefresh(); },
+    "ysh-toggle": function () { var ys = ui.player.ysh; ys.on = !ys.on; ys.start = YTM.cur; ys.end = YTM.cur + ys.len; ys.phase = "play"; ytRefresh(); },
+    "ysh-len": function (v) { var ys = ui.player.ysh; ys.len = Number(v); ys.end = ys.start + ys.len; ytRefresh(); },
+    "ysh-replay": function () { var ys = ui.player.ysh; YTM.call("seekTo", ys.start, true); YTM.cur = ys.start; ys.end = ys.start + ys.len; ys.phase = "play"; YTM.call("playVideo"); E.logDay(S, E.today(), "oral", 0); ytRefresh(); },
+    "ysh-next": function () { var ys = ui.player.ysh; ys.start = ys.end; ys.end = ys.start + ys.len; ys.phase = "play"; YTM.call("playVideo"); E.logDay(S, E.today(), "oral", 0); ytRefresh(); },
+    "v-watched": function () { YTM.lesson = ui.player.id; var v = YTM.lv(); v.done = true; v.pct = 100; E.logDay(S, E.today(), "watch", 0); save(); toast("Vidéo notée comme vue. Place aux exercices."); render(); },
+    "sh-play": function () {
+      var sh = ui.oral.sh;
+      if (sh.phase === "listen" || sh.phase === "turn") { shStop(sh); sh.phase = "paused"; render(); }
+      else shStep();
+    },
+    "sh-replay": function () { var sh = ui.oral.sh; shStop(sh); shStep(); },
+    "sh-next": function () { var sh = ui.oral.sh, n = E.lessonById(ui.oral.id).lines.length; shStop(sh); sh.round = 0; sh.reveal = false; sh.i = Math.min(n, sh.i + 1); if (sh.i >= n) shFinish(); else shStep(); },
+    "sh-text": function (v) { ui.oral.sh.text = v; render(); },
+    "sh-speed": function (v) { ui.oral.sh.speed = Number(v); render(); },
+    "sh-rounds": function (v) { ui.oral.sh.rounds = Number(v); render(); },
+    "sh-mic": function () { ui.oral.sh.mic = !ui.oral.sh.mic; render(); },
+    "sh-reveal": function () { ui.oral.sh.reveal = true; render(); },
+    "sh-rate": function (v) { var sh = ui.oral.sh; sh.rating = v; if (v === "difficile") E.addConcept(S, "prononciation", ui.oral.id, E.today()); save(); render(); },
+    "sh-restart": function (v) { var old = ui.oral.sh, sh = shState(); sh.text = v || old.text; sh.speed = old.speed; sh.rounds = old.rounds; sh.mic = old.mic; ui.oral.sh = sh; render(); window.scrollTo(0, 0); },
     "add-heard": async function () {
       var txt = (ui.f.heard || "").trim();
       if (!txt) { toast("Écris la réplique d’abord."); return; }
@@ -2566,6 +2976,8 @@ html { padding-top: env(safe-area-inset-top, 0px); }
         if (t.getAttribute("data-live") === "lib") { ui.lib.q = t.value; var box = document.getElementById("lib-list"); if (box) box.innerHTML = libList(); }
       }
       if (t.getAttribute("data-a-input") === "volume" && ui.player) ui.player.volume = Number(t.value) / 100;
+      if (t.getAttribute("data-yt") === "seek") { YTM.drag = true; var tt = document.getElementById("yt-time"); if (tt) tt.textContent = mmss(Number(t.value)) + " / " + (YTM.dur ? mmss(YTM.dur) : "–"); }
+      if (t.getAttribute("data-yt") === "vol" && ui.player) { ui.player.ytVol = Number(t.value); YTM.call("setVolume", Number(t.value)); }
     });
     document.addEventListener("keydown", function (e) {
       if (e.key !== "Enter" || e.shiftKey) return;
@@ -2575,7 +2987,18 @@ html { padding-top: env(safe-area-inset-top, 0px); }
       else if (id === "f-heard") { e.preventDefault(); A["add-heard"](); }
       else if (id === "f-rev") { e.preventDefault(); if (ui.review && !ui.review.checked) A["rev-check"](); }
     });
-    document.addEventListener("visibilitychange", function () { if (document.hidden && ui.player && ui.player.playing) { pausePlayer(); playerTick(); } });
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) { YTM.flush(); if (ui.oral && ui.oral.sh && (ui.oral.sh.phase === "listen" || ui.oral.sh.phase === "turn")) { shStop(ui.oral.sh); ui.oral.sh.phase = "paused"; } }
+      if (document.hidden && ui.player && ui.player.playing) { pausePlayer(); playerTick(); }
+    });
+    document.addEventListener("change", function (e) {
+      var t = e.target;
+      if (t.getAttribute("data-yt") === "seek") {
+        var v = Number(t.value); YTM.drag = false; YTM.call("seekTo", v, true); YTM.cur = v;
+        var ys = ui.player && ui.player.ysh; if (ys) { ys.start = v; ys.end = v + ys.len; ys.phase = "play"; }
+      }
+    });
+    window.addEventListener("online", function () { if (ui.route === "player" && ui.player && ui.player.tab === "video" && !YTM.player) { render(); if (!IN_CLAUDE) YTM.mount(ui.player.id); } });
     render();
     AI.init().then(function () { if (["coach", "home", "watch", "oral"].indexOf(ui.route) !== -1 && !document.activeElement.matches("input,textarea")) render(); });
     Cloud.init();

@@ -17,6 +17,23 @@ try {
 } catch (e) {}
 class FakeRec { start() { var self = this; setTimeout(function () { self.onresult && self.onresult({ results: [[{ transcript: window.__say }]] }); self.onend && self.onend(); }, 30); } stop() {} }
 window.SpeechRecognition = FakeRec; window.webkitSpeechRecognition = FakeRec;
+// Faux lecteur YouTube (le réseau de test n'atteint pas YouTube) : même API que YT.Player.
+window.__ytErr = null;
+window.YT = { Player: function (id, opts) {
+  var el = document.getElementById(id), f = document.createElement("iframe"); f.id = id; el.replaceWith(f);
+  var t = 0, st = -1, rate = 1, timer = null, self = this;
+  function set(s) { st = s; opts.events.onStateChange && opts.events.onStateChange({ data: s }); }
+  this.getAvailablePlaybackRates = function () { return [0.25, 0.5, 0.75, 1, 1.5, 2]; };
+  this.getDuration = function () { return 60; };
+  this.getCurrentTime = function () { return t; };
+  this.playVideo = function () { clearInterval(timer); set(1); timer = setInterval(function () { t = Math.min(60, t + 2 * rate); if (t >= 60) { clearInterval(timer); set(0); } }, 100); };
+  this.pauseVideo = function () { clearInterval(timer); set(2); };
+  this.seekTo = function (x) { t = x; };
+  this.setPlaybackRate = function (r) { rate = r; opts.events.onPlaybackRateChange && opts.events.onPlaybackRateChange({ data: r }); };
+  this.setVolume = function () {};
+  this.destroy = function () { clearInterval(timer); f.remove(); };
+  setTimeout(function () { if (window.__ytErr) opts.events.onError({ data: window.__ytErr }); else opts.events.onReady({}); }, 50);
+} };
 """
 
 errors = []
@@ -193,6 +210,64 @@ with sync_playwright() as p:
     click(page, "[data-a='rep-mic']"); page.wait_for_timeout(200)
     assert page.locator("text=86 %").count() >= 1, "répétition 86 %"
     assert page.locator("text=would ✗").count() == 1
+
+    # 12. Vidéo YouTube : lecteur, contrôles, shadowing vidéo, suivi
+    click(page, "[data-a='nav'][data-v='library']")
+    assert page.locator("text=▶ YouTube").count() == 6, "pastilles YouTube"
+    click(page, "[data-a='open-lesson'][data-v='supermarket']")
+    click(page, "[data-a='player-tab'][data-v='video']")
+    page.wait_for_timeout(400)
+    assert page.locator("#yt-region iframe").count() == 1, "lecteur YouTube"
+    page.evaluate("window.__ifr = document.querySelector('#yt-region iframe')")
+    assert page.locator("text=English MD").count() >= 1
+    click(page, "[data-a='yt-rate'][data-v='0.75']")
+    click(page, "[data-a='ysh-toggle']")
+    click(page, "[data-a='ysh-len'][data-v='4']")
+    click(page, "[data-a='yt-play']")
+    page.wait_for_timeout(1200)
+    assert page.locator("text=À toi : répète le passage").count() == 1, "pause shadowing vidéo"
+    assert page.evaluate("window.__ifr === document.querySelector('#yt-region iframe') && document.contains(window.__ifr)"), "l'iframe ne doit pas être rechargée"
+    click(page, "[data-a='ysh-replay']"); page.wait_for_timeout(900)
+    click(page, "[data-a='ysh-toggle']")
+    click(page, "[data-a='yt-play']"); page.wait_for_timeout(5000)
+    shot(page, "10-video")
+    assert page.locator("#yt-pct:has-text('Vue en entier')").count() == 1, "vidéo vue en entier"
+    page.fill("#f-vheard", "Can I have a bag, please?")
+    click(page, "[data-a='add-vheard']")
+    st = json.loads(page.evaluate("localStorage.getItem('em.state.v1')"))
+    print("vidéo :", st["lessons"]["supermarket"]["video"], "| mots vidéo :", [w["en"] for w in st["words"].values() if w.get("source") == "video"])
+    assert page.evaluate("window.__ifr === document.querySelector('#yt-region iframe')"), "iframe conservée après ajout"
+    # vidéo bloquée par la chaîne
+    click(page, "[data-a='player-tab'][data-v='lesson']")
+    page.evaluate("window.__ytErr = 150")
+    click(page, "[data-a='player-tab'][data-v='video']"); page.wait_for_timeout(400)
+    assert page.locator("text=La chaîne n’autorise pas la lecture en dehors de YouTube.").count() == 1, "erreur 150"
+    click(page, "[data-a='player-tab'][data-v='lesson']")
+    page.evaluate("window.__ytErr = null")
+    assert page.locator(".stage").count() == 1
+    click(page, "[data-a='back-home']")
+    assert page.locator("text=Récemment").count() == 1
+
+    # 13. Shadowing sur une leçon, avec la voix notée
+    click(page, "[data-a='nav'][data-v='oral']")
+    click(page, "[data-a='oral-mode'][data-v='shadow']")
+    click(page, "[data-a='oral-lesson'][data-v='weather']")
+    click(page, "[data-a='oral-mode'][data-v='shadow']")
+    click(page, "[data-a='sh-rounds'][data-v='1']")
+    click(page, "[data-a='sh-mic']")
+    page.evaluate("window.__say = 'lovely day isnt it'")
+    click(page, "[data-a='sh-play']")
+    page.wait_for_timeout(300)
+    assert page.locator("text=À toi : répète !").count() == 1 or page.locator(".pill.blue").count() >= 1, "tour de parole"
+    page.wait_for_timeout(1500)
+    shot(page, "11-shadowing")
+    for _ in range(10):
+        if page.locator("text=Shadowing terminé").count(): break
+        click(page, "[data-a='sh-next']")
+    assert page.locator("text=Shadowing terminé").count() == 1, "fin du shadowing"
+    click(page, "[data-a='sh-rate'][data-v='difficile']")
+    st = json.loads(page.evaluate("localStorage.getItem('em.state.v1')"))
+    print("shadowing :", [r for r in st["results"] if r["t"] == "shadow"], "| prononciation à revoir :", "prononciation" in st["concepts"])
 
     # 11. Réglages et accueil final
     click(page, "[data-a='nav'][data-v='home']")

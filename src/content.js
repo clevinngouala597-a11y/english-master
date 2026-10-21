@@ -336,7 +336,27 @@
     }
   ];
 
+  /* Vraies vidéos YouTube, une par leçon. Pages vérifiées le 20/10/2026 ; l'intégration
+     est contrôlée par le lecteur YouTube à chaque lecture (vidéo bloquée = message + lien). */
+  var CHECKED = "2026-10-20";
+  var VIDEOS = {
+    hello: { id: "qk292kwyiXU", title: "Introducing yourself in English / A1 for beginners.", channel: "Learn English Online", level: "A1", accent: null, duration: null, subtitles: null, about: "Joao et Katerina se rencontrent dans l’ascenseur d’une école d’anglais, se présentent et parlent de leur pays." },
+    cafe: { id: "ybDCTCJzx9w", title: "Ordering Coffee at a Café - BEGINNER - A1 A2 - English Conversation", channel: "Learn English with Relaxing Stories", level: "A1-A2", accent: null, duration: null, subtitles: null, about: "Un dialogue pour commander un café et une viennoiserie : taille, chaud ou froid, petite conversation polie." },
+    routine: { id: "t0_x13V786g", title: "BEGINNER ENGLISH STORY ⏰ Jonny's Daily Routine ⏰ A1 / A2 / Level 1 | BRITISH ENGLISH WITH SUBTITLES", channel: "Lovely English Stories", level: "A1-A2", accent: "britannique", duration: null, subtitles: "Sous-titres anglais dans la vidéo", about: "Une histoire racontée lentement : la journée de Jonny, du réveil au soir." },
+    directions: { id: "wpGQBanTAgc", title: "Asking for directions in London | English listening | Beginner | A1", channel: "Angličtina online - Chcem sa učiť", level: "A1", accent: null, duration: null, subtitles: null, about: "Une écoute A1 : demander son chemin dans les rues de Londres." },
+    supermarket: { id: "1xHABEfV53g", title: "At the Supermarket | Supermarket Vocabulary & Dialogues | Beginner English for ESL Learners (A1)", channel: "English MD", level: "A1", accent: null, duration: 242, subtitles: null, about: "Vocabulaire du supermarché, quantités, rayons, demander de l’aide et payer à la caisse." },
+    weather: { id: "40PRWD1-HWA", title: "Talking about WEATHER — Slow Beginner English (A1-A2)", channel: "Learn English with Camille", level: "A1-A2", accent: null, duration: null, subtitles: null, about: "Camille et Calvin parlent de la météo en anglais simple et lent." }
+  };
+  Object.keys(VIDEOS).forEach(function (k) {
+    var v = VIDEOS[k];
+    v.lang = "en";
+    v.url = "https://www.youtube.com/watch?v=" + v.id;
+    v.source = "YouTube";
+    v.validation = { status: "page vérifiée", date: CHECKED };
+  });
+
   LESSONS.forEach(function (l) {
+    l.video = VIDEOS[l.id] || null;
     l.source = { type: "original", name: "English Master", note: "Leçon originale lue par la voix de synthèse de l’appareil" };
     l.subtitles = ["EN", "FR"];
     l.validation = { status: "validée", date: VALIDATED };

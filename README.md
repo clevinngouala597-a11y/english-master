@@ -14,6 +14,8 @@ Premier module : **English Video Coach**.
 - [x] Bilan avec le coach en fin de module et plan ajouté au suivi
 - [x] Suivi par périodes école / entreprise, régularité, évolution, révisions espacées
 - [x] Séries et films par niveau et par thème
+- [x] Une vraie vidéo YouTube par leçon A1 (lecteur intégré, vitesse, réécoute, suivi du visionnage)
+- [x] Shadowing : sur le dialogue des leçons (texte, vitesse, répétitions, voix notée) et sur les vidéos (pause automatique par passage)
 - [ ] Leçons A2, B1, B2
 - [ ] Catégories Pro, Maintenance, TOEIC
 
@@ -25,7 +27,7 @@ Premier module : **English Video Coach**.
 2. **Bibliothèque** : leçons par niveau (A1 à B2) et par catégorie.
 3. **Séries & films** : vrais titres classés par niveau et par thème, avec une méthode pour regarder.
 4. **Lecteur** : voix, vitesse, réécoute d'une phrase, sous-titres cliquables, fiche mot.
-5. **Oral** : jeu de rôle (tu réponds à voix haute) et répétition avec score mot par mot.
+5. **Oral** : jeu de rôle, répétition notée mot par mot et shadowing.
 6. **Exercice** : compréhension, QCM, trous, traduction, dictée, oral, résumé.
 7. **Résultats** : score détaillé, erreurs retenues, effet sur les recommandations.
 8. **Bilan avec le coach** : conversation de fin de module et plan concret.
@@ -47,6 +49,7 @@ Premier module : **English Video Coach**.
 | Coach et corrections libres | Claude | Conseils préparés, corrections automatiques |
 | Oral au micro | Non (le micro est bloqué dans claude.ai) : réponses écrites | Oui, avec la reconnaissance vocale de Safari |
 | Voix des leçons | Oui | Oui |
+| Vidéos YouTube | Lien vers YouTube | Lecteur intégré + shadowing vidéo |
 | Sauvegarde | Compte Claude + appareil | Navigateur de l’appareil |
 | Hors ligne | Non | Oui, après une première ouverture |
 

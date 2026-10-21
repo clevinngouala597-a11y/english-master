@@ -212,12 +212,12 @@
 
   /* ---------- État ---------- */
   var EX_TYPES = ["comprehension", "vocab", "gaps", "translation", "dictation", "oral", "summary"];
-  var EX_LABELS = { comprehension: "Compréhension", vocab: "QCM vocabulaire", gaps: "Texte à trous", translation: "Traduction", dictation: "Dictée", oral: "Oral", summary: "Résumé en anglais", revision: "Révision", roleplay: "Jeu de rôle", repeat: "Répétition" };
+  var EX_LABELS = { comprehension: "Compréhension", vocab: "QCM vocabulaire", gaps: "Texte à trous", translation: "Traduction", dictation: "Dictée", oral: "Oral", summary: "Résumé en anglais", revision: "Révision", roleplay: "Jeu de rôle", repeat: "Répétition", shadow: "Shadowing" };
   var SKILLS = {
     comprehension: { label: "Compréhension orale", types: ["comprehension", "dictation"] },
     vocabulaire: { label: "Vocabulaire", types: ["vocab", "gaps"] },
     ecriture: { label: "Écriture", types: ["translation", "summary"] },
-    oral: { label: "Oral", types: ["oral", "roleplay", "repeat"] }
+    oral: { label: "Oral", types: ["oral", "roleplay", "repeat", "shadow"] }
   };
   var MASTERY = 80;
   var INTERVALS = [1, 3, 7, 14, 30];
@@ -463,8 +463,14 @@
       var ls = state.lessons[l.id];
       var st = lessonStatus(state, l.id);
       var score = 0, reasons = [], kind = "new";
+      var vid = ls && ls.video;
       if (st.key === "nouvelle") { score += 30; reasons.push("Nouvelle leçon à ton niveau " + level); }
-      else if (st.key === "en-cours") { score += 45; kind = "continue"; reasons.push(ls.watched ? "Tu l’as vue : il reste les exercices" : "Tu l’as commencée"); }
+      else if (st.key === "en-cours") {
+        score += 45; kind = "continue";
+        if (vid && vid.done && !ls.exDone) reasons.push("Tu as vu la vidéo YouTube : il reste les exercices");
+        else if (vid && vid.max > 0 && !vid.done) reasons.push("Tu as commencé la vidéo YouTube (" + vid.pct + " %)");
+        else reasons.push(ls.watched ? "Tu l’as vue : il reste les exercices" : "Tu l’as commencée");
+      }
       else if (st.key === "fragile") { score += 35; kind = "consolidate"; reasons.push("Score de " + st.pct + " % : à consolider avant d’avancer"); }
       else {
         if (ls.review && ls.review.next <= date) { score += 20; kind = "review"; reasons.push("Révision prévue aujourd’hui"); }
@@ -511,6 +517,23 @@
     return steps;
   }
 
+  /* Shadowing : temps laissé pour répéter une phrase juste après la voix. */
+  function shadowGap(text, rate) {
+    var n = tokens(text).length;
+    return Math.round(Math.max(2, (n * 0.45) / (rate || 1) + 1) * 10) / 10;
+  }
+  /* Vidéo : avancement suivi à partir du lecteur YouTube. */
+  function videoProgress(v, pos, dur, playedSec) {
+    v.max = Math.max(v.max || 0, pos || 0);
+    v.sec = Math.round(((v.sec || 0) + (playedSec || 0)) * 10) / 10;
+    if (dur > 0) {
+      v.dur = dur;
+      v.pct = Math.min(100, Math.round((v.max / dur) * 100));
+      if (!v.done && (v.max >= dur * 0.9 || v.sec >= dur * 0.8)) v.done = true;
+    }
+    return v;
+  }
+
   var ENGINE = {
     iso: iso, parse: parse, today: today, addDays: addDays, diffDays: diffDays, weekday: weekday, mondayOf: mondayOf, isoWeek: isoWeek, fmtDay: fmtDay, fmtShort: fmtShort,
     numWords: numWords, normalize: normalize, tokens: tokens, hasPhrase: hasPhrase, lev: lev, align: align, keyGroups: keyGroups, matchesAccepted: matchesAccepted, pretty: pretty,
@@ -520,7 +543,7 @@
     defaultState: defaultState, migrate: migrate, L: L, logDay: logDay, recordResult: recordResult, lessonScore: lessonScore, lessonStatus: lessonStatus, finishExercises: finishExercises,
     skillLevels: skillLevels, weakestSkill: weakestSkill, addWord: addWord, addConcept: addConcept, review: review, dueItems: dueItems, upcoming: upcoming,
     dayStatus: dayStatus, streak: streak, calendar: calendar, PERIOD_LABEL: PERIOD_LABEL, periodInfo: periodInfo, periodPlan: periodPlan, fmtSlot: fmtSlot, periodObjectives: periodObjectives, TARGETS: TARGETS,
-    weeklyEvolution: weeklyEvolution, recommend: recommend, buildSteps: buildSteps, revisionFor: revisionFor
+    weeklyEvolution: weeklyEvolution, shadowGap: shadowGap, videoProgress: videoProgress, recommend: recommend, buildSteps: buildSteps, revisionFor: revisionFor
   };
   if (typeof module !== "undefined" && module.exports) module.exports = ENGINE;
   root.EM_ENGINE = ENGINE;

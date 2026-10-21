@@ -133,6 +133,35 @@ t("les jours avant le début ne comptent pas comme manqués", () => {
   assert.equal(E.fmtSlot("19:30"), "19h30");
 });
 
+t("shadowing : temps de répétition", () => {
+  assert.equal(E.shadowGap("Is it far?", 1), 2.4);
+  assert.ok(E.shadowGap("I start at eight and I finish at half past four.", 0.75) > E.shadowGap("I start at eight and I finish at half past four.", 1));
+});
+
+t("vidéo : vue en entier à 90 % de la durée, pas avant", () => {
+  const v = {};
+  E.videoProgress(v, 100, 242, 100);
+  assert.equal(v.done, undefined);
+  assert.equal(v.pct, 41);
+  E.videoProgress(v, 220, 242, 120);
+  assert.equal(v.done, true);
+});
+
+t("vidéo commencée : la leçon passe en tête des recommandations", () => {
+  const s = E.defaultState();
+  const ls = E.L(s, "weather"); ls.started = "2026-10-20"; ls.video = { max: 60, pct: 30, sec: 60 };
+  const r = E.recommend(s, { date: "2026-10-21" });
+  assert.equal(r[0].lesson.id, "weather");
+  assert.match(r[0].reasons[0], /vidéo YouTube/);
+});
+
+t("chaque leçon a une vraie vidéo YouTube", () => {
+  C.LESSONS.forEach((l) => {
+    assert.ok(l.video && /^[A-Za-z0-9_-]{11}$/.test(l.video.id), l.id);
+    assert.ok(l.video.title && l.video.channel && l.video.url.endsWith(l.video.id));
+  });
+});
+
 t("toutes les leçons ont un contenu complet", () => {
   C.LESSONS.forEach((l) => {
     assert.ok(l.lines.length >= 8, l.id);

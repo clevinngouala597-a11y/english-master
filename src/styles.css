@@ -32,6 +32,7 @@ a { color: var(--blue-fg); }
 :focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
 h1, h2, h3 { text-wrap: balance; }
 mark { background: var(--acc); color: var(--on-acc); padding: 0 3px; border-radius: 4px; }
+[hidden] { display: none !important; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 #app { max-width: 480px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 14px 120px; display: flex; flex-direction: column; gap: 22px; min-height: 100%; }
@@ -214,3 +215,15 @@ table.evo tbody tr { border-top: 1px solid var(--line); }
 .steps-bar i.cur { background: var(--acc); }
 .steps-bar i.skip { background: #4A4E56; }
 .chapters { display: flex; gap: 3px; font-size: 12px; color: var(--mut); }
+
+/* Vidéo YouTube */
+.yt-frame { position: relative; aspect-ratio: 16 / 9; max-width: 100%; border-radius: var(--r-lg); overflow: hidden; background: #000; border: 1px solid var(--line); }
+.yt-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.yt-loading { pointer-events: none; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--mut); font-size: 14px; }
+input[type="range"] { accent-color: var(--acc); width: 100%; min-height: 32px; }
+dt, dd { min-width: 0; overflow-wrap: anywhere; }
+
+/* Shadowing */
+.countdown { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.countdown i { display: block; height: 100%; width: 100%; background: var(--acc); animation-name: shrink; animation-timing-function: linear; animation-fill-mode: forwards; }
+@keyframes shrink { from { width: 100%; } to { width: 0; } }
