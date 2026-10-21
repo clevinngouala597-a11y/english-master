@@ -16,6 +16,7 @@ Premier module : **English Video Coach**.
 - [x] Séries et films par niveau et par thème
 - [x] Une vraie vidéo YouTube par leçon A1 (lecteur intégré, vitesse, réécoute, suivi du visionnage)
 - [x] Shadowing : sur le dialogue des leçons (texte, vitesse, répétitions, voix notée) et sur les vidéos (pause automatique par passage)
+- [x] Choix de la voix anglaise dans les réglages (écoute avant de choisir, voix Premium en premier)
 - [ ] Leçons A2, B1, B2
 - [ ] Catégories Pro, Maintenance, TOEIC
 

@@ -225,7 +225,7 @@
   function defaultState() {
     return {
       v: 1, updatedAt: 0,
-      profile: { name: "", level: "A1", goal: "quotidien", minutes: 15, period: null, slot: "19:00", onboarded: false, since: "" },
+      profile: { name: "", level: "A1", goal: "quotidien", minutes: 15, period: null, slot: "19:00", onboarded: false, since: "", voice: "" },
       lessons: {}, results: [], words: {}, concepts: {}, days: {}, bilans: [], watched: [], plan: []
     };
   }

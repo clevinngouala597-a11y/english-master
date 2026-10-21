@@ -985,7 +985,7 @@ html { padding-top: env(safe-area-inset-top, 0px); }
   function defaultState() {
     return {
       v: 1, updatedAt: 0,
-      profile: { name: "", level: "A1", goal: "quotidien", minutes: 15, period: null, slot: "19:00", onboarded: false, since: "" },
+      profile: { name: "", level: "A1", goal: "quotidien", minutes: 15, period: null, slot: "19:00", onboarded: false, since: "", voice: "" },
       lessons: {}, results: [], words: {}, concepts: {}, days: {}, bilans: [], watched: [], plan: []
     };
   }
@@ -1429,13 +1429,32 @@ html { padding-top: env(safe-area-inset-top, 0px); }
       var self = this;
       var f = function () { try { self.voices = window.speechSynthesis.getVoices() || []; } catch (e) { } };
       f();
-      try { window.speechSynthesis.addEventListener("voiceschanged", f); } catch (e) { }
+      try { window.speechSynthesis.addEventListener("voiceschanged", function () { f(); if (ui && ui.route === "settings") render(); }); } catch (e) { }
     },
-    voice: function (lang) {
-      var lc = lang.toLowerCase();
-      var exact = this.voices.filter(function (v) { return v.lang && v.lang.replace("_", "-").toLowerCase() === lc; });
-      var good = exact.filter(function (v) { return /samantha|daniel|karen|moira|serena|arthur|google|premium|enhanced/i.test(v.name); });
-      return good[0] || exact[0] || this.voices.filter(function (v) { return /^en/i.test(v.lang || ""); })[0] || null;
+    NOVELTY: /^(albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|fred|junior|ralph|kathy|grandma|grandpa|rocko|shelley|sandy|eddy|flo|reed)\b/i,
+    quality: function (v) {
+      var s = (v.name + " " + v.voiceURI).toLowerCase();
+      if (/premium/.test(s)) return 3;
+      if (/enhanced|améliorée|siri|neural|natural|online/.test(s)) return 2;
+      if (/google/.test(s)) return 2;
+      return 1;
+    },
+    english: function () {
+      var self = this;
+      return this.voices.filter(function (v) { return /^en[-_]/i.test(v.lang || "") && !self.NOVELTY.test(v.name); })
+        .sort(function (a, b) { return self.quality(b) - self.quality(a) || (a.lang < b.lang ? -1 : a.lang > b.lang ? 1 : 0) || (a.name < b.name ? -1 : 1); });
+    },
+    byURI: function (uri) { return uri ? this.voices.filter(function (v) { return v.voiceURI === uri; })[0] || null : null; },
+    voice: function (lang, auto) {
+      var chosen = auto ? null : this.byURI(S.profile.voice);
+      if (chosen) return chosen;
+      var self = this, lc = lang.toLowerCase();
+      var en = this.english();
+      var exact = en.filter(function (v) { return v.lang.replace("_", "-").toLowerCase() === lc; });
+      var best = function (list) { return list.slice().sort(function (a, b) { return self.quality(b) - self.quality(a) || (/samantha|daniel|karen|serena|arthur/i.test(b.name) ? 1 : 0) - (/samantha|daniel|karen|serena|arthur/i.test(a.name) ? 1 : 0); })[0]; };
+      var e = best(exact), any = best(en);
+      if (e && any && self.quality(any) > self.quality(e)) return any;
+      return e || any || null;
     },
     speak: function (text, o) {
       var self = this; o = o || {};
@@ -1443,8 +1462,8 @@ html { padding-top: env(safe-area-inset-top, 0px); }
         if (!self.ok) { res(false); return; }
         var u = new window.SpeechSynthesisUtterance(text);
         u.lang = o.lang || "en-US";
-        var v = self.voice(u.lang);
-        if (v) u.voice = v;
+        var v = o.voice || self.voice(u.lang);
+        if (v) { try { u.voice = v; } catch (e) { } if (o.voice || S.profile.voice) u.lang = v.lang; }
         u.rate = Math.max(0.4, Math.min(1.2, o.rate || 1));
         if (o.volume != null) u.volume = o.volume;
         var done = false;
@@ -1587,9 +1606,26 @@ html { padding-top: env(safe-area-inset-top, 0px); }
       profileForm(false) +
       notice("Tes progrès restent sur ton appareil" + (IN_CLAUDE ? " et dans ton compte Claude." : ".") + " Tu pourras tout modifier dans les réglages.");
   };
+  var ACCENT = { "en-us": "américaine", "en-gb": "britannique", "en-au": "australienne", "en-ie": "irlandaise", "en-za": "sud-africaine", "en-in": "indienne", "en-ca": "canadienne", "en-nz": "néo-zélandaise", "en-sc": "écossaise" };
+  function voiceSection() {
+    var list = TTS.english(), cur = S.profile.voice || "", found = TTS.byURI(cur);
+    var auto = TTS.voice("en-US", true);
+    var h = '<section class="card stack" id="voix"><div class="stack-sm" style="gap:2px"><p class="eyebrow">Voix anglaise</p><p class="small muted">Touche « Écouter » pour comparer, puis choisis celle que tu préfères. Elle sera utilisée partout : leçons, oral, shadowing, dictée.</p></div>';
+    if (!TTS.ok) return h + '<p class="fb bad">La voix de synthèse n’est pas disponible sur ce navigateur.</p></section>';
+    if (!list.length) return h + '<p class="small muted dots">Chargement des voix</p></section>';
+    var row = function (v, label, sub, q, uri) {
+      var on = uri === cur || (!uri && !found);
+      return '<div class="row" style="gap:10px;padding:10px 12px;border-radius:12px;' + (on ? "border:2px solid var(--acc);" : "border:1px solid var(--line);") + '"><button class="grow" style="text-align:left;background:none;border:0;padding:0;min-height:44px;display:flex;flex-direction:column;justify-content:center;gap:2px" data-a="voice-pick" data-v="' + esc(uri) + '" aria-pressed="' + on + '"><span style="font-weight:700">' + esc(label) + (on ? ' <span style="color:var(--acc)">✓</span>' : "") + '</span><span class="xs muted">' + esc(sub) + "</span></button>" + (q ? '<span class="pill ' + (q === 3 ? "acc" : q === 2 ? "blue" : "") + '">' + (q === 3 ? "Premium" : q === 2 ? "Améliorée" : "Standard") + "</span>" : "") + '<button class="icon-btn" style="width:40px;height:40px" data-a="voice-test" data-v="' + esc(uri) + '" aria-label="Écouter ' + esc(label) + '">' + icon("speaker", 18) + "</button></div>";
+    };
+    h += '<div class="stack-sm">' + row(null, "Automatique", "La meilleure voix trouvée, selon l’accent de la leçon" + (auto ? " (" + auto.name + ")" : ""), 0, "");
+    h += list.map(function (v) { return row(v, v.name.replace(/\s*\((enhanced|premium|améliorée)\)/i, ""), "Voix " + (ACCENT[v.lang.replace("_", "-").toLowerCase()] || v.lang) + (v.localService === false ? " · en ligne" : ""), TTS.quality(v), v.voiceURI); }).join("") + "</div>";
+    var hasGood = list.some(function (v) { return TTS.quality(v) >= 2; });
+    h += '<details' + (hasGood ? "" : " open") + '><summary class="small" style="cursor:pointer;min-height:44px;display:flex;align-items:center;color:var(--blue-fg);font-weight:600">' + (hasGood ? "Avoir encore plus de voix" : "Les voix sonnent robotiques ? Télécharge une voix naturelle") + '</summary><ol class="small stack-sm" style="margin:0;padding-left:20px"><li>Ouvre <b>Réglages</b> sur ton iPhone, puis <b>Accessibilité</b>.</li><li><b>Contenu énoncé</b> → <b>Voix</b> → <b>Anglais</b>.</li><li>Choisis une voix marquée <b>Premium</b> ou <b>Améliorée</b> (par exemple Ava, Zoe ou Evan) et touche le nuage pour la télécharger.</li><li>Ferme l’app English Master puis rouvre-la : la voix apparaît ici.</li></ol></details></section>';
+    return h;
+  }
   SCREENS.settings = function () {
     var confirm = ui.confirm === "reset";
-    return top("back-home", "Réglages", "Profil et alternance") + profileForm(true) +
+    return top("back-home", "Réglages", "Profil et alternance") + voiceSection() + profileForm(true) +
       '<section class="card stack"><p class="eyebrow">Tes données</p><p class="small muted">' + (IN_CLAUDE ? "Enregistrées dans ton compte Claude et sur cet appareil." : "Enregistrées dans le navigateur de cet appareil.") + " Le coach et les corrections détaillées utilisent Claude " + (IN_CLAUDE ? "(disponible ici)" : "(disponible dans la version claude.ai)") + ".</p>" +
       (confirm ? '<p class="fb bad">Tout effacer : leçons, scores, mots, bilans. Impossible à annuler.</p><div class="row"><button class="btn grow" data-a="cancel-confirm">Annuler</button><button class="btn grow" style="border-color:var(--org);color:var(--org)" data-a="reset-yes">Tout effacer</button></div>' : '<button class="btn ghost" data-a="ask-reset">' + icon("trash", 18) + "Effacer mes données</button>") +
       "</section>";
@@ -1785,6 +1821,7 @@ html { padding-top: env(safe-area-inset-top, 0px); }
     h += '<div class="controls"><button class="ctl" data-a="seg-replay" aria-label="Réécouter la phrase">' + icon("replay") + '</button><button class="ctl" data-a="seg-prev" aria-label="Phrase précédente">' + icon("prev") + '</button><button class="ctl play" data-a="play" aria-label="' + (P.playing ? "Pause" : "Lecture") + '">' + icon(P.playing ? "pause" : "play", 28) + '</button><button class="ctl" data-a="seg-next" aria-label="Phrase suivante">' + icon("next") + '</button><button class="ctl mic" data-a="open-oral" data-v="' + l.id + ':repeat" aria-label="Répéter à voix haute">' + icon("mic", 22, 2.2) + "</button></div>";
     h += '<div class="row"><div class="seg acc" role="group" aria-label="Vitesse de la voix" style="grid-template-columns:repeat(3,minmax(0,1fr));flex:1.2">' + [0.5, 0.75, 1].map(function (s) { return '<button data-a="speed" data-v="' + s + '" aria-pressed="' + (P.speed === s) + '" style="min-height:38px">' + String(s).replace(".", ",") + "×</button>"; }).join("") + "</div>" +
       '<div class="seg" style="grid-template-columns:repeat(2,minmax(0,1fr));flex:1"><button data-a="toggle-en" aria-pressed="' + P.en + '" style="min-height:38px">EN</button><button data-a="toggle-fr" aria-pressed="' + P.fr + '" style="min-height:38px">FR</button></div></div>';
+    h += '<button class="link" data-a="go" data-v="settings">' + icon("speaker", 16) + "Changer de voix</button>";
     if (IS_IOS) h += notice("Volume : utilise les boutons de ton iPhone. Mode silencieux coupé pour entendre la voix.");
     else h += '<label class="row" style="min-height:44px;color:var(--mut)">' + icon("speaker") + '<span style="color:var(--fg);font-size:14px">Volume de la voix</span><input type="range" id="f-vol" min="0" max="100" value="' + Math.round((P.volume == null ? 1 : P.volume) * 100) + '" data-a-input="volume" style="flex:1;accent-color:#FFD23F"></label>';
     h += '<p class="xs muted">Source : ' + esc(l.source.name) + " · leçon originale · validée le " + E.fmtDay(l.validation.date) + " · sous-titres " + l.subtitles.join(" + ") + "</p>";
@@ -2766,6 +2803,8 @@ html { padding-top: env(safe-area-inset-top, 0px); }
       toast(first ? "Profil créé. Voici ta leçon du jour." : "Réglages enregistrés");
       go("home");
     },
+    "voice-pick": function (v) { S.profile.voice = v || ""; save(); var vo = TTS.byURI(v); toast(vo ? "Voix choisie : " + vo.name : "Voix automatique"); TTS.cancel(); TTS.speak("Hi! I would like a coffee, please.", { lang: vo ? vo.lang : "en-US", voice: vo || null }); render(); },
+    "voice-test": function (v) { var vo = TTS.byURI(v) || TTS.voice("en-US", true); TTS.cancel(); TTS.speak("Hi! I would like a coffee, please. How much is it?", { lang: vo ? vo.lang : "en-US", voice: vo }); },
     "ask-reset": function () { ui.confirm = "reset"; render(); },
     "cancel-confirm": function () { ui.confirm = null; render(); },
     "reset-yes": function () { var onb = S.profile; S = E.defaultState(); S.profile = onb; S.profile.onboarded = true; save(); ui.confirm = null; toast("Données effacées"); go("home"); },

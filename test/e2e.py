@@ -14,6 +14,12 @@ try {
   const ss = window.speechSynthesis;
   ss.speak = function (u) { setTimeout(function () { u.onend && u.onend(); }, 20); };
   ss.cancel = function () {};
+  ss.getVoices = function () { return [
+    { name: "Samantha", lang: "en-US", voiceURI: "com.apple.voice.compact.en-US.Samantha", localService: true },
+    { name: "Ava (Premium)", lang: "en-US", voiceURI: "com.apple.voice.premium.en-US.Ava", localService: true },
+    { name: "Daniel", lang: "en-GB", voiceURI: "com.apple.voice.compact.en-GB.Daniel", localService: true },
+    { name: "Bubbles", lang: "en-US", voiceURI: "com.apple.speech.synthesis.voice.bubbles", localService: true },
+    { name: "Thomas", lang: "fr-FR", voiceURI: "com.apple.voice.compact.fr-FR.Thomas", localService: true } ]; };
 } catch (e) {}
 class FakeRec { start() { var self = this; setTimeout(function () { self.onresult && self.onresult({ results: [[{ transcript: window.__say }]] }); self.onend && self.onend(); }, 30); } stop() {} }
 window.SpeechRecognition = FakeRec; window.webkitSpeechRecognition = FakeRec;
@@ -268,6 +274,18 @@ with sync_playwright() as p:
     click(page, "[data-a='sh-rate'][data-v='difficile']")
     st = json.loads(page.evaluate("localStorage.getItem('em.state.v1')"))
     print("shadowing :", [r for r in st["results"] if r["t"] == "shadow"], "| prononciation à revoir :", "prononciation" in st["concepts"])
+
+    # 14. Choix de la voix
+    click(page, "[data-a='nav'][data-v='home']")
+    click(page, "[data-a='go'][data-v='settings']")
+    assert page.locator("text=Voix anglaise").count() == 1
+    assert page.locator("[data-a='voice-pick']").count() == 4, "Automatique + 3 voix anglaises (sans Bubbles ni la voix française)"
+    assert page.locator("[data-a='voice-pick']").nth(1).inner_text().startswith("Ava"), "la voix Premium en premier"
+    click(page, "[data-a='voice-test'][data-v='com.apple.voice.compact.en-GB.Daniel']")
+    click(page, "[data-a='voice-pick'][data-v='com.apple.voice.compact.en-GB.Daniel']")
+    assert json.loads(page.evaluate("localStorage.getItem('em.state.v1')"))["profile"]["voice"] == "com.apple.voice.compact.en-GB.Daniel"
+    shot(page, "12-voix")
+    click(page, "[data-a='back-home']")
 
     # 11. Réglages et accueil final
     click(page, "[data-a='nav'][data-v='home']")
