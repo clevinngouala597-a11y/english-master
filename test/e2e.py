@@ -79,7 +79,7 @@ with sync_playwright() as p:
     page.fill("#f-pend", "2026-10-30")
     click(page, "[data-a='save-profile']")
     assert page.locator("text=Salut Clevin").count() == 1, "accueil absent"
-    assert page.locator("text=Hello! Meeting someone").count() >= 1
+    assert page.locator("[data-a='open-lesson'][data-v='hello']").count() >= 1
     shot(page, "01-accueil")
 
     # 2. Bibliothèque, filtres, recherche

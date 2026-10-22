@@ -41,9 +41,9 @@
   function icon(name, size, sw) {
     return '<svg width="' + (size || 22) + '" height="' + (size || 22) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + (sw || 2) + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (IC[name] || "") + "</svg>";
   }
-  var TILE = { chat: "#7C9CFF", cup: "#FFD23F", clock: "#F2F3EE", sign: "#7C9CFF", basket: "#FFD23F", cloud: "#F2F3EE" };
+  var TILE = { chat: "#5CE1E6", cup: "#C8FF2E", clock: "#EDEBE4", sign: "#5CE1E6", basket: "#C8FF2E", cloud: "#EDEBE4" };
   var PARTNER = { Barista: "le barista", Passante: "une passante", "Employé": "l’employé du magasin" };
-  var POSTER = { orange: "#FF9F5A", blue: "#7C9CFF", sky: "#A9BEFF", yellow: "#FFD23F", lime: "#C6F432", white: "#F2F3EE" };
+  var POSTER = { orange: "#FF7A3D", blue: "#5CE1E6", sky: "#9AF0F3", yellow: "#C8FF2E", lime: "#FF4FD8", white: "#EDEBE4" };
 
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function pct(n) { return n == null ? "—" : n + " %"; }
@@ -306,7 +306,7 @@
     return '<span class="pill">Nouvelle</span>';
   }
   function tile(l, small) {
-    return '<span class="tile' + (small ? " sm" : "") + '" style="color:' + (TILE[l.icon] || "#F2F3EE") + '">' + icon(l.icon, small ? 26 : 30) + "</span>";
+    return '<span class="tile' + (small ? " sm" : "") + '" style="color:' + (TILE[l.icon] || "#EDEBE4") + '">' + icon(l.icon, small ? 26 : 30) + "</span>";
   }
   function meter(label, value, opts) {
     opts = opts || {};
@@ -320,22 +320,22 @@
   }
   function scene(l, crop) {
     var obj = {
-      cup: '<path d="M2 14h34v18a10 10 0 0 1-10 10H12A10 10 0 0 1 2 32z" fill="#FFD23F"/><path d="M36 19h5a6 6 0 0 1 0 12h-5" fill="none" stroke="#FFD23F" stroke-width="4"/>',
-      clock: '<circle cx="22" cy="24" r="19" fill="none" stroke="#FFD23F" stroke-width="5"/><path d="M22 13v12l8 5" stroke="#FFD23F" stroke-width="4" stroke-linecap="round" fill="none"/>',
-      sign: '<path d="M22 4v40" stroke="#FFD23F" stroke-width="4"/><path d="M6 8h26l7 6-7 6H6z" fill="#FFD23F"/><path d="M38 24H12l-7 6 7 6h26z" fill="#FFD23F" opacity="0.7"/>',
-      basket: '<path d="M2 16h40l-5 26H7z" fill="#FFD23F"/><path d="m12 16 10-13 10 13" fill="none" stroke="#FFD23F" stroke-width="4"/>',
-      cloud: '<circle cx="14" cy="12" r="8" fill="#FFD23F"/><path d="M16 44h22a9 9 0 0 0 0-18 12 12 0 0 0-23 3 7.5 7.5 0 0 0 1 15z" fill="#F2F3EE"/>',
-      chat: '<path d="M2 6h28a4 4 0 0 1 4 4v14a4 4 0 0 1-4 4H14l-8 7v-7H6a4 4 0 0 1-4-4V10a4 4 0 0 1 4-4z" fill="#FFD23F"/>'
+      cup: '<path d="M2 14h34v18a10 10 0 0 1-10 10H12A10 10 0 0 1 2 32z" fill="#C8FF2E"/><path d="M36 19h5a6 6 0 0 1 0 12h-5" fill="none" stroke="#C8FF2E" stroke-width="4"/>',
+      clock: '<circle cx="22" cy="24" r="19" fill="none" stroke="#C8FF2E" stroke-width="5"/><path d="M22 13v12l8 5" stroke="#C8FF2E" stroke-width="4" stroke-linecap="round" fill="none"/>',
+      sign: '<path d="M22 4v40" stroke="#C8FF2E" stroke-width="4"/><path d="M6 8h26l7 6-7 6H6z" fill="#C8FF2E"/><path d="M38 24H12l-7 6 7 6h26z" fill="#C8FF2E" opacity="0.7"/>',
+      basket: '<path d="M2 16h40l-5 26H7z" fill="#C8FF2E"/><path d="m12 16 10-13 10 13" fill="none" stroke="#C8FF2E" stroke-width="4"/>',
+      cloud: '<circle cx="14" cy="12" r="8" fill="#C8FF2E"/><path d="M16 44h22a9 9 0 0 0 0-18 12 12 0 0 0-23 3 7.5 7.5 0 0 0 1 15z" fill="#EDEBE4"/>',
+      chat: '<path d="M2 6h28a4 4 0 0 1 4 4v14a4 4 0 0 1-4 4H14l-8 7v-7H6a4 4 0 0 1-4-4V10a4 4 0 0 1 4-4z" fill="#C8FF2E"/>'
     }[l.icon] || "";
-    return '<svg viewBox="0 0 358 ' + (crop ? 150 : 214) + '" role="img" aria-label="Scène de la leçon ' + esc(l.title) + '"><rect width="358" height="214" fill="#1F2228"/><circle cx="60" cy="40" r="80" fill="#7C9CFF" opacity="0.14"/><rect y="132" width="358" height="82" fill="#0B0C0E"/><circle cx="92" cy="74" r="20" fill="#F2F3EE"/><path d="M60 132a32 30 0 0 1 64 0z" fill="#F2F3EE"/><circle cx="266" cy="70" r="20" fill="#7C9CFF"/><path d="M234 132a32 32 0 0 1 64 0z" fill="#7C9CFF"/><g transform="translate(156 84)">' + obj + "</g></svg>";
+    return '<svg viewBox="0 0 358 ' + (crop ? 150 : 214) + '" role="img" aria-label="Scène de la leçon ' + esc(l.title) + '"><rect width="358" height="214" fill="#1C1C1C"/><circle cx="60" cy="40" r="80" fill="#5CE1E6" opacity="0.14"/><rect y="132" width="358" height="82" fill="#0A0A0A"/><circle cx="92" cy="74" r="20" fill="#EDEBE4"/><path d="M60 132a32 30 0 0 1 64 0z" fill="#EDEBE4"/><circle cx="266" cy="70" r="20" fill="#5CE1E6"/><path d="M234 132a32 32 0 0 1 64 0z" fill="#5CE1E6"/><g transform="translate(156 84)">' + obj + "</g></svg>";
   }
   function ring(value, size) {
     size = size || 120;
     var r = 52, c = 2 * Math.PI * r, v = Math.max(0, Math.min(100, value || 0));
     var ang = (-90 + 0.8 * 360) * Math.PI / 180;
     var x1 = 64 + 44 * Math.cos(ang), y1 = 64 + 44 * Math.sin(ang), x2 = 64 + 60 * Math.cos(ang), y2 = 64 + 60 * Math.sin(ang);
-    var col = v >= E.MASTERY ? "#7C9CFF" : "#FF9F5A";
-    return '<svg class="ring" width="' + size + '" height="' + size + '" viewBox="0 0 128 128" role="img" aria-label="Score ' + v + ' %, seuil de maîtrise 80 %"><circle cx="64" cy="64" r="52" fill="none" stroke="#2A2E35" stroke-width="12"/><circle cx="64" cy="64" r="52" fill="none" stroke="' + col + '" stroke-width="12" stroke-linecap="round" stroke-dasharray="' + (c * v / 100).toFixed(1) + " " + c.toFixed(1) + '" transform="rotate(-90 64 64)"/><path d="M' + x1.toFixed(1) + " " + y1.toFixed(1) + "L" + x2.toFixed(1) + " " + y2.toFixed(1) + '" stroke="#F2F3EE" stroke-width="3" stroke-linecap="round"/><text x="64" y="73" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-size="30" font-weight="800" fill="#F2F3EE">' + v + " %</text></svg>";
+    var col = v >= E.MASTERY ? "#5CE1E6" : "#FF7A3D";
+    return '<svg class="ring" width="' + size + '" height="' + size + '" viewBox="0 0 128 128" role="img" aria-label="Score ' + v + ' %, seuil de maîtrise 80 %"><circle cx="64" cy="64" r="52" fill="none" stroke="#2B2B2B" stroke-width="12"/><circle cx="64" cy="64" r="52" fill="none" stroke="' + col + '" stroke-width="12" stroke-linecap="round" stroke-dasharray="' + (c * v / 100).toFixed(1) + " " + c.toFixed(1) + '" transform="rotate(-90 64 64)"/><path d="M' + x1.toFixed(1) + " " + y1.toFixed(1) + "L" + x2.toFixed(1) + " " + y2.toFixed(1) + '" stroke="#EDEBE4" stroke-width="3" stroke-linecap="round"/><text x="64" y="73" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="34" fill="#EDEBE4">' + v + " %</text></svg>";
   }
   function stepsBar(n, cls) {
     return '<div class="steps-bar" style="grid-template-columns:repeat(' + n + ',minmax(0,1fr))" aria-hidden="true">' + cls.map(function (c) { return '<i class="' + c + '"></i>'; }).join("") + "</div>";
@@ -362,7 +362,7 @@
       '<button class="btn primary big block" data-a="save-profile">' + (isSettings ? "Enregistrer" : "C’est parti") + "</button></div>";
   }
   SCREENS.onboard = function () {
-    return '<header class="stack-sm" style="padding-top:8px"><div class="brand"><b>English Master</b><span>Video Coach</span></div></header>' +
+    return '<header class="stack-sm" style="padding-top:8px"><div class="brand"><b><i>EM/</i> English Master</b><span>Video Coach</span></div></header>' +
       '<section class="stack-sm"><h1 class="h1">Ton coach d’anglais, calé sur ton alternance</h1><p class="muted">Leçons avec voix et sous-titres, oral au micro, exercices corrigés, bilan avec le coach à la fin de chaque module.</p></section>' +
       profileForm(false) +
       notice("Tes progrès restent sur ton appareil" + (IN_CLAUDE ? " et dans ton compte Claude." : ".") + " Tu pourras tout modifier dans les réglages.");
@@ -429,7 +429,7 @@
     var nWords = Object.keys(S.words).length, st = E.streak(S, t), sk = E.skillLevels(S);
     var lastB = S.bilans[S.bilans.length - 1];
     var h = "";
-    h += '<header class="row-between" style="align-items:center"><div class="brand"><b>English Master</b><span>Video Coach</span></div><div class="row">' +
+    h += '<header class="row-between" style="align-items:center"><div class="brand"><b><i>EM/</i> English Master</b><span>Video Coach</span></div><div class="row">' +
       '<button class="btn round" style="min-height:44px;padding:0 12px 0 16px" data-a="go" data-v="settings" aria-label="Niveau ' + P.level + ', changer">' + P.level + icon("chev", 16, 2.2) + "</button>" +
       '<button class="avatar" data-a="go" data-v="settings" aria-label="Réglages">' + esc((P.name || "?").charAt(0).toUpperCase()) + "</button></div></header>";
     if (pi) {
@@ -441,9 +441,12 @@
     h += '<section class="stack-sm"><h2 class="eyebrow">Temps disponible</h2><div class="row">' + [5, 10, 15, 20].map(function (m) { return '<button class="btn grow" style="min-height:44px;' + (P.minutes === m ? "background:var(--acc);color:var(--on-acc);border:0;font-weight:700" : "") + '" data-a="minutes" data-v="' + m + '" aria-pressed="' + (P.minutes === m) + '">' + m + " min</button>"; }).join("") + "</div></section>";
     if (rec) {
       var l = rec.lesson;
-      h += '<article class="card card-lg" style="padding:0;overflow:hidden"><div class="stage" style="border:0;border-radius:0;aspect-ratio:358/150">' + scene(l, true) + '<span class="tag" style="left:auto;right:12px;background:var(--acc);color:var(--on-acc);font-weight:800;letter-spacing:.08em;text-transform:uppercase">' + (rec.kind === "review" ? "Révision du jour" : "Leçon du jour") + "</span></div>" +
-        '<div class="stack" style="padding:16px"><div class="stack-sm"><h2 class="h2" style="font-size:28px">' + esc(l.title) + '</h2><p class="muted">' + esc(l.fr) + "</p></div>" +
-        '<div class="row wrap" style="gap:6px"><span class="pill light">' + l.level + '</span><span class="pill">' + (l.categories.indexOf("conversations") !== -1 ? "Conversation" : "Quotidien") + '</span><span class="pill">≈ ' + rec.watchMinutes + ' min</span><span class="pill">Accent ' + l.accent + '</span><span class="pill">EN + FR</span>' + statusPill(rec.status) + "</div>" +
+      var dropN = String(C.LESSONS.indexOf(l) + 1).padStart(2, "0");
+      h += '<article class="stack" style="gap:16px"><div class="row-between" style="align-items:center"><span class="sticker">' + (rec.kind === "review" ? "Révision du jour" : "Leçon du jour") + '</span><span class="eyebrow">Drop ' + dropN + " / " + String(C.LESSONS.length).padStart(2, "0") + "</span></div>" +
+        '<h2 class="drop-title">' + esc(l.title).split(" ").join("<br>") + '<span class="star" aria-hidden="true">✶</span></h2><p class="muted" style="font-size:16px">' + esc(l.fr) + "</p>" +
+        '<div class="row wrap" style="gap:8px"><span class="sticker out">' + l.accent + ' accent</span><span class="pill light">' + l.level + '</span><span class="pill">≈ ' + rec.watchMinutes + ' min</span>' + statusPill(rec.status) + "</div>" +
+        '<div class="stage" style="aspect-ratio:358/150">' + scene(l, true) + "</div>" +
+        '<div class="stack">' +
         '<div class="card tight stack-sm" style="background:var(--s2);border:0"><p class="eyebrow" style="font-size:11px">Pourquoi cette leçon</p><ul style="margin:0;padding:0;list-style:none" class="stack-sm">' +
         rec.reasons.map(function (r) { return '<li class="row" style="align-items:flex-start;font-size:14px"><span style="color:var(--blue);flex:none;margin-top:1px">' + icon("check", 18, 2.4) + "</span><span>" + esc(r) + "</span></li>"; }).join("") + "</ul></div>" +
         '<div class="row"><button class="btn primary big grow" data-a="open-lesson" data-v="' + l.id + '">' + icon("play", 18) + (rec.kind === "continue" && S.lessons[l.id] && S.lessons[l.id].watched ? "Revoir" : "Regarder") + "</button>" +
@@ -514,7 +517,7 @@
   /* Séries et films */
   function watchCard(w, big) {
     var watched = S.watched.filter(function (x) { return x.title === w.title; }).length;
-    return '<article class="card stack" style="padding:14px"><div class="row" style="align-items:flex-start;gap:12px"><div class="poster' + (big ? " lg" : "") + '" aria-hidden="true" style="background:' + (POSTER[w.tile] || "#F2F3EE") + '">' + esc(w.title.charAt(0)) + '</div><div class="grow stack-sm"><span style="font-size:' + (big ? 18 : 16) + 'px;font-weight:700">' + esc(w.title) + '</span><span class="small muted">' + esc(w.kind + " · " + w.meta) + '</span><span class="row wrap" style="gap:6px"><span class="pill light">' + w.level + " conseillé</span>" + (watched ? '<span class="pill blue">Vu ' + watched + " fois</span>" : "") + "</span></div></div>" +
+    return '<article class="card stack" style="padding:14px"><div class="row" style="align-items:flex-start;gap:12px"><div class="poster' + (big ? " lg" : "") + '" aria-hidden="true" style="background:' + (POSTER[w.tile] || "#EDEBE4") + '">' + esc(w.title.charAt(0)) + '</div><div class="grow stack-sm"><span style="font-size:' + (big ? 18 : 16) + 'px;font-weight:700">' + esc(w.title) + '</span><span class="small muted">' + esc(w.kind + " · " + w.meta) + '</span><span class="row wrap" style="gap:6px"><span class="pill light">' + w.level + " conseillé</span>" + (watched ? '<span class="pill blue">Vu ' + watched + " fois</span>" : "") + "</span></div></div>" +
       '<p style="font-size:14px"><b>Ce que tu vas entendre :</b> ' + esc(w.note) + '</p><p class="small muted"><b style="color:var(--fg)">Comment :</b> ' + esc(w.how) + "</p>" +
       '<div class="row"><a class="btn grow" style="min-height:44px;font-size:14px" href="' + watchLink(w.title) + '" target="_blank" rel="noopener">Où le regarder' + icon("ext", 16) + '</a><button class="btn primary grow" style="min-height:44px;font-size:14px" data-a="watched" data-v="' + esc(w.title) + '">J’ai regardé</button></div></article>';
   }
@@ -588,7 +591,7 @@
       '<div class="seg" style="grid-template-columns:repeat(2,minmax(0,1fr));flex:1"><button data-a="toggle-en" aria-pressed="' + P.en + '" style="min-height:38px">EN</button><button data-a="toggle-fr" aria-pressed="' + P.fr + '" style="min-height:38px">FR</button></div></div>';
     h += '<button class="link" data-a="go" data-v="settings">' + icon("speaker", 16) + "Changer de voix</button>";
     if (IS_IOS) h += notice("Volume : utilise les boutons de ton iPhone. Mode silencieux coupé pour entendre la voix.");
-    else h += '<label class="row" style="min-height:44px;color:var(--mut)">' + icon("speaker") + '<span style="color:var(--fg);font-size:14px">Volume de la voix</span><input type="range" id="f-vol" min="0" max="100" value="' + Math.round((P.volume == null ? 1 : P.volume) * 100) + '" data-a-input="volume" style="flex:1;accent-color:#FFD23F"></label>';
+    else h += '<label class="row" style="min-height:44px;color:var(--mut)">' + icon("speaker") + '<span style="color:var(--fg);font-size:14px">Volume de la voix</span><input type="range" id="f-vol" min="0" max="100" value="' + Math.round((P.volume == null ? 1 : P.volume) * 100) + '" data-a-input="volume" style="flex:1;accent-color:#C8FF2E"></label>';
     h += '<p class="xs muted">Source : ' + esc(l.source.name) + " · leçon originale · validée le " + E.fmtDay(l.validation.date) + " · sous-titres " + l.subtitles.join(" + ") + "</p>";
     h += '<section class="card stack-sm"><p class="eyebrow">Objectifs</p><ul style="margin:0;padding-left:18px" class="stack-sm small">' + l.objectives.map(function (o) { return "<li>" + esc(o) + "</li>"; }).join("") + "</ul></section>";
     h += '<section class="stack" style="gap:6px"><div class="stack-sm" style="gap:2px;padding:4px 0 6px"><h2 class="eyebrow">Sous-titres</h2><p class="small muted">Touche l’heure pour y aller, un mot souligné pour le garder.</p></div>';

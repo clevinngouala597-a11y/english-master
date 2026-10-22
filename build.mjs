@@ -11,7 +11,7 @@ const audioManifest = existsSync(new URL("./audio/manifest.json", import.meta.ur
 const js = ["window.EM_AUDIO = " + audioManifest + ";", read("./src/content.js"), read("./src/engine.js"), read("./src/app.js")].join("\n");
 const version = createHash("sha1").update(css + js).digest("hex").slice(0, 8);
 
-const fonts = '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap">';
+const fonts = '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;700&display=swap">';
 const body = '<main id="app" aria-live="off"></main>\n<nav id="nav" class="nav" aria-label="Navigation principale" hidden></nav>\n<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>';
 
 const fragment = `<title>English Master</title>
@@ -33,7 +33,7 @@ const page = `<!doctype html>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>English Master</title>
 <meta name="description" content="Apprendre l’anglais avec des leçons vidéo adaptées à ton niveau, de l’oral, un coach et un suivi calé sur l’alternance.">
-<meta name="theme-color" content="#0B0C0E">
+<meta name="theme-color" content="#0A0A0A">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -80,8 +80,8 @@ const manifest = {
   start_url: "./",
   scope: "./",
   display: "standalone",
-  background_color: "#0B0C0E",
-  theme_color: "#0B0C0E",
+  background_color: "#0A0A0A",
+  theme_color: "#0A0A0A",
   lang: "fr",
   icons: [
     { src: "icon-192.png", sizes: "192x192", type: "image/png" },

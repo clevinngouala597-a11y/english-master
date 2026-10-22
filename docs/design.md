@@ -2,30 +2,32 @@
 
 Maquettes : 9 écrans iPhone (390 px de large), thème noir.
 
+## Direction : Street / drop
+
+Typo XXL condensée en capitales, étiquettes mono façon stickers, vert fluo sur noir, angles nets, ombres décalées sur les boutons principaux.
+
 ## Couleurs
 
 | Rôle | Valeur |
 |---|---|
-| Fond | `#0B0C0E` |
-| Surface (cartes) | `#16181C` |
-| Surface 2 (puces, champs) | `#1F2228` |
-| Bordure | `#2A2E35` |
-| Texte | `#F2F3EE` |
-| Texte secondaire | `#9BA0A8` |
-| Action principale, mot surligné | `#FFD23F` (texte noir dessus) |
-| Maîtrisé, progression | `#7C9CFF` · fond `#1A2447` · texte `#A9BEFF` |
-| Fragile, à revoir | `#FF9F5A` · fond `#3A2414` · texte `#FFB27A` |
-
-Un état n'est jamais montré par la couleur seule : il y a toujours un mot (« à revoir », « Maîtrisée ») ou un symbole (✓, ✗, ↻).
+| Fond | `#0A0A0A` |
+| Surface (cartes) | `#141414` |
+| Surface 2 | `#1C1C1C` |
+| Bordure | `#2B2B2B` |
+| Texte | `#EDEBE4` (blanc cassé) |
+| Texte secondaire | `#A3A09A` |
+| Action, stickers, mot surligné | `#C8FF2E` (vert fluo, texte noir dessus) |
+| Maîtrisé, progression | `#5CE1E6` · fond `#0F2E30` · texte `#9AF0F3` |
+| Fragile, à revoir | `#FF7A3D` · fond `#3A1A0E` · texte `#FFA27A` |
 
 ## Typographie
 
-- Titres : **Bricolage Grotesque** 700–800
-- Texte : **Inter** 400–700
-- Corps 15–16 px, libellés 12–13 px, titres d'écran 34 px
+- Titres : **Anton** (condensée, capitales)
+- Texte : **Archivo**
+- Étiquettes, chiffres, navigation : **IBM Plex Mono**
 
 ## Règles
 
-- Zones tactiles d'au moins 44 px.
-- Contraste du texte d'au moins 4,5:1.
-- Navigation basse : Accueil, Bibliothèque, Oral, Suivi.
+- Zones tactiles d'au moins 44 px, contraste du texte d'au moins 4,5:1.
+- Un état n'est jamais montré par la couleur seule (mot ou symbole).
+- Le vert fluo est réservé aux actions et aux stickers ; une seule « audace » par écran.
