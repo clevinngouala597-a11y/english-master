@@ -1,11 +1,12 @@
-/* English Master — cache hors ligne (version 0f73bc1b) */
-const CACHE = "em-0f73bc1b";
+/* English Master — cache hors ligne (version 30e40a1f) */
+const CACHE = "em-30e40a1f";
 const ASSETS = ["./", "./index.html", "./icon-180.png", "./icon-192.png", "./manifest.webmanifest"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
-  if (new URL(e.request.url).origin !== self.location.origin) return;
+  const u = new URL(e.request.url);
+  if (u.origin !== self.location.origin || u.pathname.includes("/audio/")) return;
   e.respondWith(
     fetch(e.request)
       .then((r) => { const copy = r.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {}); return r; })

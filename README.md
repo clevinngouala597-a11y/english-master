@@ -16,7 +16,7 @@ Premier module : **English Video Coach**.
 - [x] Séries et films par niveau et par thème
 - [x] Une vraie vidéo YouTube par leçon A1 (lecteur intégré, vitesse, réécoute, suivi du visionnage)
 - [x] Shadowing : sur le dialogue des leçons (texte, vitesse, répétitions, voix notée) et sur les vidéos (pause automatique par passage)
-- [x] Choix de la voix anglaise dans les réglages (écoute avant de choisir, voix Premium en premier)
+- [x] Voix naturelles : toutes les phrases des leçons enregistrées avec 4 voix neuronales (Heart, Michael, Emma, George), voix de l’iPhone en secours
 - [ ] Leçons A2, B1, B2
 - [ ] Catégories Pro, Maintenance, TOEIC
 
@@ -64,7 +64,7 @@ Premier module : **English Video Coach**.
 ## Technique
 
 - Page web sans serveur : HTML, CSS, JavaScript.
-- Voix : `speechSynthesis` (Web Speech API). Micro : reconnaissance vocale de Safari.
+- Voix : phrases pré-enregistrées avec [Kokoro](https://github.com/hexgrad/kokoro) (Apache 2.0) dans `audio/`, générées par `tools/make_audio.py` ; `speechSynthesis` en secours. Micro : reconnaissance vocale de Safari.
 - Données : `localStorage` sur l’appareil, et base du compte dans la version claude.ai.
 - Sources dans `src/` : `content.js` (leçons), `engine.js` (logique : scores, maîtrise, révisions, périodes, recommandations), `app.js` (écrans), `styles.css`.
 

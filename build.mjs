@@ -6,7 +6,9 @@ import { createHash } from "node:crypto";
 
 const read = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
 const css = read("./src/styles.css");
-const js = [read("./src/content.js"), read("./src/engine.js"), read("./src/app.js")].join("\n");
+import { existsSync } from "node:fs";
+const audioManifest = existsSync(new URL("./audio/manifest.json", import.meta.url)) ? read("./audio/manifest.json") : "null";
+const js = ["window.EM_AUDIO = " + audioManifest + ";", read("./src/content.js"), read("./src/engine.js"), read("./src/app.js")].join("\n");
 const version = createHash("sha1").update(css + js).digest("hex").slice(0, 8);
 
 const fonts = '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap">';
@@ -61,7 +63,8 @@ self.addEventListener("install", (e) => { e.waitUntil(caches.open(CACHE).then((c
 self.addEventListener("activate", (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
-  if (new URL(e.request.url).origin !== self.location.origin) return;
+  const u = new URL(e.request.url);
+  if (u.origin !== self.location.origin || u.pathname.includes("/audio/")) return;
   e.respondWith(
     fetch(e.request)
       .then((r) => { const copy = r.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {}); return r; })

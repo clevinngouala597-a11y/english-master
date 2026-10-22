@@ -109,6 +109,68 @@
     }
   };
 
+  /* ---------- Voix naturelles (phrases pré-enregistrées, Kokoro) ---------- */
+  var NV = {
+    M: window.EM_AUDIO || null,
+    INFO: {
+      af_heart: { name: "Heart", desc: "Femme · accent américain" },
+      am_michael: { name: "Michael", desc: "Homme · accent américain" },
+      bf_emma: { name: "Emma", desc: "Femme · accent britannique" },
+      bm_george: { name: "George", desc: "Homme · accent britannique" }
+    },
+    el: null, token: 0, broken: {}, unlocked: false,
+    key: function (t) { return String(t).replace(/…/g, "").replace(/\s+/g, " ").trim(); },
+    has: function () { return !!(this.M && this.M.voices && this.M.voices.length); },
+    pick: function (lang) {
+      if (!this.has()) return null;
+      var p = S.profile.voice || "";
+      if (p.indexOf("neural:") === 0) return this.M.voices.indexOf(p.slice(7)) !== -1 ? p.slice(7) : null;
+      if (p) return null;
+      return /gb/i.test(lang || "") ? "bf_emma" : "af_heart";
+    },
+    clip: function (voice, text) { var c = this.M && this.M.clips[voice] && this.M.clips[voice][this.key(text)]; return c && !this.broken[this.src(voice, c)] ? c : null; },
+    src: function (voice, c) { return "audio/" + voice + "/" + c[0] + ".mp3"; },
+    audio: function () {
+      if (!this.el) { this.el = new Audio(); this.el.preload = "auto"; this.el.setAttribute("playsinline", ""); window.__emAudio = this.el; }
+      return this.el;
+    },
+    unlock: function () {
+      if (this.unlocked || !this.has()) return;
+      this.unlocked = true;
+      var a = this.audio(), v = this.M.voices[0];
+      try { a.muted = true; a.src = "audio/" + v + "/common.mp3"; a.setAttribute("data-src", a.src); var p = a.play(); if (p && p.then) p.then(function () { a.pause(); a.muted = false; }).catch(function () { a.muted = false; }); } catch (e) { a.muted = false; }
+    },
+    play: function (voice, c, rate, vol) {
+      var self = this, my = ++this.token, a = this.audio(), src = this.src(voice, c);
+      return new Promise(function (res) {
+        var done = false, iv = null, to = null;
+        var fin = function (ok) {
+          if (done) return; done = true; clearInterval(iv); clearTimeout(to); a.removeEventListener("error", onErr);
+          if (my === self.token) try { a.pause(); } catch (e) { }
+          res(ok);
+        };
+        var onErr = function () { self.broken[src] = true; fin(false); };
+        var start = function () {
+          if (my !== self.token) { fin(true); return; }
+          try { a.currentTime = c[1]; } catch (e) { }
+          a.defaultPlaybackRate = rate; a.playbackRate = rate;
+          a.preservesPitch = true; a.webkitPreservesPitch = true; a.mozPreservesPitch = true;
+          a.volume = vol == null ? 1 : vol; a.muted = false;
+          var p = a.play();
+          if (p && p.catch) p.catch(function () { fin(false); });
+          iv = setInterval(function () { if (my !== self.token) { fin(true); return; } if (a.currentTime >= c[2] || a.ended) fin(true); }, 25);
+          to = setTimeout(function () { fin(true); }, ((c[2] - c[1]) / rate) * 1000 + 6000);
+        };
+        a.addEventListener("error", onErr);
+        var whenReady = function () { var h = function () { a.removeEventListener("loadedmetadata", h); start(); }; a.addEventListener("loadedmetadata", h); };
+        if (a.getAttribute("data-src") !== src) { a.setAttribute("data-src", src); whenReady(); a.src = src; a.load(); }
+        else if (a.readyState >= 1) start();
+        else whenReady();
+      });
+    },
+    stop: function () { this.token++; if (this.el) try { this.el.pause(); } catch (e) { } }
+  };
+
   /* ---------- Voix de l'appareil ---------- */
   var TTS = {
     ok: typeof window.speechSynthesis !== "undefined" && typeof window.SpeechSynthesisUtterance !== "undefined",
@@ -147,6 +209,16 @@
     },
     speak: function (text, o) {
       var self = this; o = o || {};
+      var nv = o.neural || (o.voice ? null : NV.pick(o.lang));
+      var c = nv ? NV.clip(nv, text) : null;
+      if (c) {
+        if (this.ok) try { window.speechSynthesis.cancel(); } catch (e) { }
+        return NV.play(nv, c, Math.max(0.5, Math.min(1.2, o.rate || 1)), o.volume).then(function (ok) { return ok ? true : self.speakDevice(text, o); });
+      }
+      return this.speakDevice(text, o);
+    },
+    speakDevice: function (text, o) {
+      var self = this; o = o || {};
       return new Promise(function (res) {
         if (!self.ok) { res(false); return; }
         var u = new window.SpeechSynthesisUtterance(text);
@@ -163,7 +235,7 @@
         try { window.speechSynthesis.speak(u); } catch (e) { fin(false); }
       });
     },
-    cancel: function () { if (this.ok) try { window.speechSynthesis.cancel(); } catch (e) { } }
+    cancel: function () { NV.stop(); if (this.ok) try { window.speechSynthesis.cancel(); } catch (e) { } }
   };
 
   /* ---------- Micro (reconnaissance vocale de Safari / Chrome) ---------- */
@@ -198,7 +270,7 @@
   }
 
   /* ---------- État de l'interface ---------- */
-  var ui = {
+  var ui = { sayTok: 0,
     route: S.profile.onboarded ? "home" : "onboard", f: {}, lib: { level: "A1", cat: "quotidien", q: "" },
     watch: { level: S.profile.level || "A1", theme: "Tous" }, suivi: "periode",
     player: null, oral: null, ex: null, coach: null, review: null, confirm: null, lastRun: null
@@ -297,20 +369,24 @@
   };
   var ACCENT = { "en-us": "américaine", "en-gb": "britannique", "en-au": "australienne", "en-ie": "irlandaise", "en-za": "sud-africaine", "en-in": "indienne", "en-ca": "canadienne", "en-nz": "néo-zélandaise", "en-sc": "écossaise" };
   function voiceSection() {
-    var list = TTS.english(), cur = S.profile.voice || "", found = TTS.byURI(cur);
-    var auto = TTS.voice("en-US", true);
-    var h = '<section class="card stack" id="voix"><div class="stack-sm" style="gap:2px"><p class="eyebrow">Voix anglaise</p><p class="small muted">Touche « Écouter » pour comparer, puis choisis celle que tu préfères. Elle sera utilisée partout : leçons, oral, shadowing, dictée.</p></div>';
-    if (!TTS.ok) return h + '<p class="fb bad">La voix de synthèse n’est pas disponible sur ce navigateur.</p></section>';
-    if (!list.length) return h + '<p class="small muted dots">Chargement des voix</p></section>';
-    var row = function (v, label, sub, q, uri) {
-      var on = uri === cur || (!uri && !found);
-      return '<div class="row" style="gap:10px;padding:10px 12px;border-radius:12px;' + (on ? "border:2px solid var(--acc);" : "border:1px solid var(--line);") + '"><button class="grow" style="text-align:left;background:none;border:0;padding:0;min-height:44px;display:flex;flex-direction:column;justify-content:center;gap:2px" data-a="voice-pick" data-v="' + esc(uri) + '" aria-pressed="' + on + '"><span style="font-weight:700">' + esc(label) + (on ? ' <span style="color:var(--acc)">✓</span>' : "") + '</span><span class="xs muted">' + esc(sub) + "</span></button>" + (q ? '<span class="pill ' + (q === 3 ? "acc" : q === 2 ? "blue" : "") + '">' + (q === 3 ? "Premium" : q === 2 ? "Améliorée" : "Standard") + "</span>" : "") + '<button class="icon-btn" style="width:40px;height:40px" data-a="voice-test" data-v="' + esc(uri) + '" aria-label="Écouter ' + esc(label) + '">' + icon("speaker", 18) + "</button></div>";
+    var cur = S.profile.voice || "", list = TTS.ok ? TTS.english() : [];
+    var row = function (pick, test, label, sub, pill, on) {
+      return '<div class="row" style="gap:10px;padding:10px 12px;border-radius:12px;' + (on ? "border:2px solid var(--acc);" : "border:1px solid var(--line);") + '"><button class="grow" style="text-align:left;background:none;border:0;padding:0;min-height:44px;display:flex;flex-direction:column;justify-content:center;gap:2px" data-a="voice-pick" data-v="' + esc(pick) + '" aria-pressed="' + on + '"><span style="font-weight:700">' + esc(label) + (on ? ' <span style="color:var(--acc)">✓</span>' : "") + '</span><span class="xs muted">' + esc(sub) + "</span></button>" + (pill || "") + '<button class="icon-btn" style="width:40px;height:40px" data-a="voice-test" data-v="' + esc(test) + '" aria-label="Écouter ' + esc(label) + '">' + icon("speaker", 18) + "</button></div>";
     };
-    h += '<div class="stack-sm">' + row(null, "Automatique", "La meilleure voix trouvée, selon l’accent de la leçon" + (auto ? " (" + auto.name + ")" : ""), 0, "");
-    h += list.map(function (v) { return row(v, v.name.replace(/\s*\((enhanced|premium|améliorée)\)/i, ""), "Voix " + (ACCENT[v.lang.replace("_", "-").toLowerCase()] || v.lang) + (v.localService === false ? " · en ligne" : ""), TTS.quality(v), v.voiceURI); }).join("") + "</div>";
-    var hasGood = list.some(function (v) { return TTS.quality(v) >= 2; });
-    h += '<details' + (hasGood ? "" : " open") + '><summary class="small" style="cursor:pointer;min-height:44px;display:flex;align-items:center;color:var(--blue-fg);font-weight:600">' + (hasGood ? "Avoir encore plus de voix" : "Les voix sonnent robotiques ? Télécharge une voix naturelle") + '</summary><ol class="small stack-sm" style="margin:0;padding-left:20px"><li>Ouvre <b>Réglages</b> sur ton iPhone, puis <b>Accessibilité</b>.</li><li><b>Contenu énoncé</b> → <b>Voix</b> → <b>Anglais</b>.</li><li>Choisis une voix marquée <b>Premium</b> ou <b>Améliorée</b> (par exemple Ava, Zoe ou Evan) et touche le nuage pour la télécharger.</li><li>Ferme l’app English Master puis rouvre-la : la voix apparaît ici.</li></ol></details></section>';
-    return h;
+    var h = '<section class="card stack" id="voix"><div class="stack-sm" style="gap:2px"><p class="eyebrow">Voix anglaise</p><p class="small muted">Touche le haut-parleur pour écouter, puis choisis ta voix. Elle sert partout : leçons, oral, shadowing, dictée.</p></div>';
+    if (NV.has()) {
+      h += '<div class="stack-sm"><p class="small" style="font-weight:700">Voix naturelles <span class="pill acc">Recommandé</span></p>' +
+        row("", "neural:auto", "Automatique", "Heart pour les leçons américaines, Emma pour les britanniques", "", cur === "") +
+        NV.M.voices.map(function (v) { var i = NV.INFO[v] || { name: v, desc: "" }; return row("neural:" + v, "neural:" + v, i.name, i.desc, "", cur === "neural:" + v); }).join("") +
+        '<p class="xs muted">Toutes les phrases des leçons sont enregistrées avec ces voix. Les phrases que tu ajoutes toi-même sont lues par la voix de ' + (IS_IOS ? "l’iPhone" : "l’appareil") + ".</p></div>";
+    }
+    if (TTS.ok) {
+      var onDevice = !!(cur && cur.indexOf("neural:") !== 0);
+      h += '<details' + (onDevice || !NV.has() ? " open" : "") + '><summary class="small" style="cursor:pointer;min-height:44px;display:flex;align-items:center;color:var(--blue-fg);font-weight:600">Voix de ' + (IS_IOS ? "l’iPhone" : "l’appareil") + " (" + list.length + ")</summary>" +
+        (list.length ? '<div class="stack-sm">' + list.map(function (v) { var q = TTS.quality(v); return row(v.voiceURI, v.voiceURI, v.name.replace(/\s*\((enhanced|premium|améliorée)\)/i, ""), "Voix " + (ACCENT[v.lang.replace("_", "-").toLowerCase()] || v.lang), '<span class="pill ' + (q === 3 ? "acc" : q === 2 ? "blue" : "") + '">' + (q === 3 ? "Premium" : q === 2 ? "Améliorée" : "Standard") + "</span>", cur === v.voiceURI); }).join("") + "</div>" : '<p class="small muted dots">Chargement des voix</p>') +
+        '<p class="xs muted" style="margin-top:8px">Pour d’autres voix : Réglages de l’iPhone → Accessibilité → Contenu énoncé → Voix → Anglais, puis télécharge une voix Premium.</p></details>';
+    }
+    return h + "</section>";
   }
   SCREENS.settings = function () {
     var confirm = ui.confirm === "reset";
@@ -497,7 +573,7 @@
     var h = top("back-home", l.title, l.level + " · " + (l.categories.indexOf("conversations") !== -1 ? "Conversation" : "Quotidien") + " · accent " + l.accent,
       '<button class="icon-btn" data-a="fav" aria-pressed="' + (S.favs && S.favs.indexOf(l.id) !== -1) + '" aria-label="Ajouter la leçon aux favoris" style="' + (S.favs && S.favs.indexOf(l.id) !== -1 ? "color:var(--acc)" : "") + '">' + icon("heart", 20) + "</button>");
     h += playerTabs(P, l);
-    h += '<div class="stage">' + scene(l) + '<span class="tag">Leçon originale · voix de ' + (IS_IOS ? "l’iPhone" : "l’appareil") + '</span><div class="subs">' +
+    h += '<div class="stage">' + scene(l) + '<span class="tag">Leçon originale · ' + (NV.pick(l.lang) ? "voix naturelle " + NV.INFO[NV.pick(l.lang)].name : "voix de " + (IS_IOS ? "l’iPhone" : "l’appareil")) + '</span><div class="subs">' +
       (P.en ? '<p class="en">' + esc(subEn) + "</p>" : "") + (P.fr && subFr ? '<p class="fr">' + esc(subFr) + "</p>" : "") + "</div></div>";
     if (!TTS.ok) h += '<p class="fb bad">La voix n’est pas disponible sur ce navigateur. Lis les sous-titres ci-dessous, ou ouvre l’app dans Safari.</p>';
     h += '<div class="stack-sm"><div class="row-between small muted num"><span>' + E.CHAPTERS[chapIdx] + " · " + (posInChap + 1) + " sur " + inChap.length + "</span><span>" + (P.done || ls.watched ? "Vue en entier ✓" : "≈ " + E.lessonMinutes(l) + " min") + "</span></div>" +
@@ -1492,8 +1568,19 @@
       toast(first ? "Profil créé. Voici ta leçon du jour." : "Réglages enregistrés");
       go("home");
     },
-    "voice-pick": function (v) { S.profile.voice = v || ""; save(); var vo = TTS.byURI(v); toast(vo ? "Voix choisie : " + vo.name : "Voix automatique"); TTS.cancel(); TTS.speak("Hi! I would like a coffee, please.", { lang: vo ? vo.lang : "en-US", voice: vo || null }); render(); },
-    "voice-test": function (v) { var vo = TTS.byURI(v) || TTS.voice("en-US", true); TTS.cancel(); TTS.speak("Hi! I would like a coffee, please. How much is it?", { lang: vo ? vo.lang : "en-US", voice: vo }); },
+    "voice-pick": function (v) {
+      S.profile.voice = v || ""; save();
+      var nv = v.indexOf("neural:") === 0 ? v.slice(7) : (!v ? NV.pick("en-US") : null), vo = nv ? null : TTS.byURI(v);
+      toast(nv ? "Voix choisie : " + (v ? NV.INFO[nv].name : "automatique") : vo ? "Voix choisie : " + vo.name : "Voix automatique");
+      TTS.cancel(); TTS.speak("Hi! I would like a coffee, please.", nv ? { lang: "en-US", neural: nv } : { lang: vo ? vo.lang : "en-US", voice: vo });
+      render();
+    },
+    "voice-test": function (v) {
+      var text = "Hi! I would like a coffee, please. How much is it?";
+      TTS.cancel();
+      if (v.indexOf("neural:") === 0) { var nv = v.slice(7) === "auto" ? (NV.has() ? "af_heart" : null) : v.slice(7); TTS.speak(text, { lang: "en-US", neural: nv }); return; }
+      var vo = TTS.byURI(v) || TTS.voice("en-US", true); TTS.speak(text, { lang: vo ? vo.lang : "en-US", voice: vo });
+    },
     "ask-reset": function () { ui.confirm = "reset"; render(); },
     "cancel-confirm": function () { ui.confirm = null; render(); },
     "reset-yes": function () { var onb = S.profile; S = E.defaultState(); S.profile = onb; S.profile.onboarded = true; save(); ui.confirm = null; toast("Données effacées"); go("home"); },
@@ -1574,7 +1661,7 @@
     "toggle-en": function () { ui.player.en = !ui.player.en; playerTick(); },
     word: function (v) { var p = v.split(":"); var P = ui.player; P.card = P.card && P.card.key === p[1] && P.card.line === Number(p[0]) ? null : { line: Number(p[0]), key: p[1] }; playerTick(); },
     "close-card": function () { ui.player.card = null; playerTick(); },
-    "say-word": function (v) { var l = E.lessonById(ui.player.id); var w = l.vocab.filter(function (x) { return x.key === v; })[0]; TTS.speak(w.en.replace(/…/g, "") + (w.ex ? ". " + w.ex : ""), { lang: l.lang, rate: 0.9 * ui.player.speed }); },
+    "say-word": function (v) { var l = E.lessonById(ui.player.id); var w = l.vocab.filter(function (x) { return x.key === v; })[0]; var o = { lang: l.lang, rate: 0.9 * ui.player.speed }, my = ++ui.sayTok; TTS.cancel(); TTS.speak(w.en, o).then(function () { if (w.ex && my === ui.sayTok) setTimeout(function () { if (my === ui.sayTok) TTS.speak(w.ex, o); }, 350); }); },
     "say-line": function (v) { var l = E.lessonById(ui.player.id); TTS.speak(l.lines[Number(v)].en, { lang: l.lang, rate: ui.player.speed }); },
     "save-word": function (v) {
       var l = E.lessonById(ui.player.id), w = l.vocab.filter(function (x) { return x.key === v; })[0], k = l.id + ":" + v;
@@ -1692,6 +1779,7 @@
   function boot() {
     TTS.load();
     document.addEventListener("click", function (e) {
+      NV.unlock();
       var t = e.target.closest("[data-a]");
       if (!t || t.disabled) return;
       var fn = A[t.getAttribute("data-a")];

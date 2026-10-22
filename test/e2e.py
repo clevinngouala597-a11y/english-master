@@ -23,6 +23,16 @@ try {
 } catch (e) {}
 class FakeRec { start() { var self = this; setTimeout(function () { self.onresult && self.onresult({ results: [[{ transcript: window.__say }]] }); self.onend && self.onend(); }, 30); } stop() {} }
 window.SpeechRecognition = FakeRec; window.webkitSpeechRecognition = FakeRec;
+// Audio des voix naturelles : lu instantanément, sauf si window.__realAudio = true.
+(function () {
+  var realPlay = HTMLMediaElement.prototype.play;
+  HTMLMediaElement.prototype.play = function () {
+    var self = this;
+    if (window.__realAudio) { try { delete self.ended; } catch (e) {} return realPlay.call(this); }
+    setTimeout(function () { try { Object.defineProperty(self, "ended", { value: true, configurable: true }); } catch (e) {} }, 30);
+    return Promise.resolve();
+  };
+})();
 // Faux lecteur YouTube (le réseau de test n'atteint pas YouTube) : même API que YT.Player.
 window.__ytErr = null;
 window.YT = { Player: function (id, opts) {
@@ -275,16 +285,31 @@ with sync_playwright() as p:
     st = json.loads(page.evaluate("localStorage.getItem('em.state.v1')"))
     print("shadowing :", [r for r in st["results"] if r["t"] == "shadow"], "| prononciation à revoir :", "prononciation" in st["concepts"])
 
-    # 14. Choix de la voix
+    # 14. Choix de la voix : voix naturelles enregistrées + voix de l'appareil
     click(page, "[data-a='nav'][data-v='home']")
     click(page, "[data-a='go'][data-v='settings']")
-    assert page.locator("text=Voix anglaise").count() == 1
-    assert page.locator("[data-a='voice-pick']").count() == 4, "Automatique + 3 voix anglaises (sans Bubbles ni la voix française)"
-    assert page.locator("[data-a='voice-pick']").nth(1).inner_text().startswith("Ava"), "la voix Premium en premier"
-    click(page, "[data-a='voice-test'][data-v='com.apple.voice.compact.en-GB.Daniel']")
-    click(page, "[data-a='voice-pick'][data-v='com.apple.voice.compact.en-GB.Daniel']")
-    assert json.loads(page.evaluate("localStorage.getItem('em.state.v1')"))["profile"]["voice"] == "com.apple.voice.compact.en-GB.Daniel"
+    assert page.locator("text=Voix naturelles").count() == 1
+    assert page.locator("[data-a='voice-pick'][data-v^='neural:']").count() == 4
+    click(page, "[data-a='voice-pick'][data-v='neural:bm_george']")
+    page.wait_for_timeout(1500)
+    st = page.evaluate("(() => { const a = [...document.querySelectorAll('audio')]; return null })()")
+    played = page.evaluate("JSON.parse(localStorage.getItem('em.state.v1')).profile.voice")
+    assert played == "neural:bm_george", played
+    page.locator("summary").first.click()
+    assert page.locator("[data-a='voice-pick'][data-v='com.apple.voice.compact.en-GB.Daniel']").count() == 1
     shot(page, "12-voix")
+    click(page, "[data-a='voice-pick'][data-v='']")
+    # la leçon utilise la voix enregistrée (fichier audio réellement lu)
+    click(page, "[data-a='back-home']")
+    click(page, "[data-a='nav'][data-v='library']")
+    click(page, "[data-a='open-lesson'][data-v='cafe']")
+    assert page.locator("text=voix naturelle Heart").count() == 1
+    page.evaluate("window.__realAudio = true")
+    click(page, "[data-a='play']")
+    page.wait_for_timeout(2500)
+    info = page.evaluate("""(() => { const a = window.__emAudio; return a ? { src: a.getAttribute('data-src'), t: a.currentTime, err: a.error && a.error.code } : null })()""")
+    print("audio :", info)
+    click(page, "[data-a='play']")
     click(page, "[data-a='back-home']")
 
     # 11. Réglages et accueil final
